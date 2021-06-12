@@ -94,7 +94,7 @@ class PanelSection extends React.Component<
       ) : undefined;
 
     return (
-      <section key={this.props.category + this.props.name}>
+      <section className="panelSection" key={this.props.category + this.props.name}>
         <p>
           {categorySpan}
           <span style={{ fontWeight: 'bold' }}>{this.props.name}</span>

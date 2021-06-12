@@ -77,24 +77,11 @@
 }
 
 .settingsPanel > section {
-  padding: 10px;
   margin-bottom: 10px;
-  border: solid thin transparent;
-  border-radius: 5px;
-  background-color: transparent;
-  transition: all ease 0.3s;
 }
 
 .settingsPanel > section > p {
   margin-bottom: 8px;
-}
-
-.settingsPanel > section:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.settingsPanel > section:active {
-  border: solid white thin;
 }
 
 .settingsPanel .longInput {

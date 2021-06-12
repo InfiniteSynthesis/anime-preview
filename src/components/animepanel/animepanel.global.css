@@ -48,12 +48,19 @@
   align-items: flex-start;
 }
 
-.metadataSection > img {
+.metadataSection > div:first-child {
   width: 30%;
-  padding: 2px;
-  margin: 8px;
+  padding: 10px;
+  margin-right: 10px;
   flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.metadataSection > div:first-child > img {
+  width: 100%;
+  padding: 2px;
   background-color: white;
+  box-sizing: border-box;
 }
 
 .metadataSubsection {
@@ -61,7 +68,7 @@
   flex-shrink: 1;
 }
 
-.metadataSubsection > p {
+.metadataSubsection > .panelSection > p {
   line-height: 2em;
 }
 
@@ -93,15 +100,11 @@
   border-bottom: solid thin grey;
 }
 
-.metadataSubsection > ul {
-  padding: 5px;
-}
-
-.metadataSubsection > ul > li {
+.metadataLinks > div {
   margin-right: 10px;
 }
 
-.metadataSubsection > ul > li > img {
+.metadataLinks > div > img {
   width: 30px;
   height: 30px;
   border-radius: 5px;
@@ -109,7 +112,7 @@
   transition: all ease 0.3s;
 }
 
-.metadataSubsection > ul > li:hover > img {
+.metadataLinks > div:hover > img {
   opacity: 1;
 }
 
@@ -227,18 +230,33 @@
   font-size: 1.1em;
 }
 
-.videoCardPanelAudio {
+.videoCardPanelAudioSubtitle {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
 }
 
-.videoCardPanelAudio > span {
+.videoCardPanelAudioSubtitle > div {
   padding: 3px;
   margin: 0 5px 3px 5px;
   line-height: 1em;
   border-radius: 3px;
   font-size: 0.8em;
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+}
+
+.videoCardPanelSubtitle > svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
+}
+
+.videoCardPanelAudio > svg {
+  width: 20px;
+  height: 20px;
+  margin: -3px 5px -3px 0;
 }
 
 .videoCardPanelDesc {

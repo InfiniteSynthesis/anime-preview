@@ -66,30 +66,31 @@ class MetadataSection extends React.Component<{ metadata: AnimeEntryInfoMetadata
 
     return (
       <div className="metadataSection">
-        {themeImg}
+        <div>
+          {themeImg}
+          <section className="panelSection rowWrapper metadataLinks">
+            <div
+              className="pointerCursor"
+              title={'bangumi ' + metadata.bangumiID}
+              onClick={() => ipcRenderer.send('shellOpenUrl', 'https://bangumi.tv/subject/' + metadata.bangumiID)}>
+              <img src={bgmIcon} />
+            </div>
+          </section>
+        </div>
+
         <div className="metadataSubsection">
-          {summary}
-          <div className="metadataInfoGrid">
+          <section className="panelSection">{summary}</section>
+
+          <section className="panelSection metadataInfoGrid">
             <div>
               <p className="oneLineText">
                 On air: {metadata.airDate} <i>{weekdayConverter[metadata.airWeekday]}</i>
               </p>
             </div>
             {staffList}
-          </div>
+          </section>
 
-          <div className="metadataInfoGrid">{characterList}</div>
-          <ul className="rowWrapper">
-            <li>
-              <span>Resource: </span>
-            </li>
-            <li
-              className="pointerCursor"
-              title={'bangumi ' + metadata.bangumiID}
-              onClick={() => ipcRenderer.send('shellOpenUrl', 'https://bangumi.tv/subject/' + metadata.bangumiID)}>
-              <img src={bgmIcon} />
-            </li>
-          </ul>
+          <section className="panelSection metadataInfoGrid">{characterList}</section>
         </div>
       </div>
     );
@@ -233,42 +234,73 @@ class VideoCard extends React.Component<
       }
 
       return (
-        <span
-          className={(dotIndex === -1 ? '' : 'pointerCursor ') + 'unselectable'}
+        <div
+          className={(dotIndex === -1 ? '' : 'pointerCursor ') + 'videoCardPanelSubtitle unselectable'}
           style={{ backgroundColor: subtitle[0] === '.' ? 'lightblue' : 'lightgreen' }}
           onClick={dotIndex === -1 ? undefined : () => this.handleSubtitleClick(subtitle)}
           key={index}>
-          {subtitleShow}
-        </span>
+          {icons.caption} {subtitleShow}
+        </div>
       );
     });
 
+    // show audio track
     const audioTrackSpans: Array<JSX.Element> = videoInfo.audio.map((audio: string, index: number) => {
+      const nameIndexStart = audio.indexOf('<');
+      const nameIndexEnd = audio.lastIndexOf('>');
+
+      if (nameIndexStart !== -1 && nameIndexEnd !== -1 && audio.slice(0, 4) === 'MKA:') {
+        return (
+          <div
+            className="videoCardPanelAudio pointerCursor unselectable"
+            style={{ backgroundColor: 'SeaShell' }}
+            key={index}
+            onClick={() => this.handleMkaClick()}
+            title={audio.slice(4)}>
+            {icons.audioTrackMka}
+            {audio.slice(4, nameIndexStart) + audio.slice(nameIndexEnd + 2)}
+          </div>
+        );
+      }
+
+      if (audio.slice(0, 4) === 'MKA:') {
+        return (
+          <div
+            className="videoCardPanelAudio pointerCursor unselectable"
+            style={{ backgroundColor: 'SeaShell' }}
+            key={index}
+            onClick={() => this.handleMkaClick()}>
+            {icons.audioTrackMka}
+            {audio.slice(4)}
+          </div>
+        );
+      }
+
+      if (nameIndexStart !== -1 && nameIndexEnd !== -1) {
+        return (
+          <div
+            className="videoCardPanelAudio unselectable"
+            style={{ backgroundColor: 'lightyellow' }}
+            key={index}
+            title={audio}>
+            {icons.audioTrack}
+            {audio.slice(0, nameIndexStart) + audio.slice(nameIndexEnd + 2)}
+          </div>
+        );
+      }
+
       return (
-        <span
-          className={(audio === 'MKA' ? 'pointerCursor ' : '') + 'unselectable'}
-          style={{ backgroundColor: 'lightyellow' }}
-          key={index}
-          onClick={audio === 'MKA' ? () => this.handleMkaClick() : undefined}>
+        <div className="videoCardPanelAudio unselectable" style={{ backgroundColor: 'lightyellow' }} key={index}>
+          {icons.audioTrack}
           {audio}
-        </span>
+        </div>
       );
     });
 
     const fileInfo: JSX.Element | null = this.props.isListLayout ? (
-      <div>
-        {videoInfo.audio.length > 0 ? (
-          <div className="videoCardPanelAudio">
-            <div>Audio: </div>
-            {audioTrackSpans}
-          </div>
-        ) : undefined}
-        {subtitleSpans.length > 0 ? (
-          <div className="videoCardPanelAudio">
-            <div>Subtitle: </div>
-            {subtitleSpans}
-          </div>
-        ) : undefined}
+      <div className="videoCardPanelAudioSubtitle">
+        {audioTrackSpans.length > 0 ? audioTrackSpans : undefined}
+        {subtitleSpans.length > 0 ? subtitleSpans : undefined}
       </div>
     ) : null;
 

@@ -106,6 +106,19 @@ function formatTime(totalSeconds: number): string {
   return (hours === 0 ? '' : hours + ':') + minutes + ':' + (seconds > 9 ? seconds : '0' + seconds);
 }
 
+function formatSampleRate(sampleRate: number): string {
+  const MHzValue = Math.floor(sampleRate / 10000000);
+  if (MHzValue > 0) {
+    return MHzValue + 'MHz';
+  }
+  const kHzValue = Math.floor(sampleRate / 1000);
+  if (kHzValue > 0) {
+    return kHzValue + 'kHz';
+  }
+
+  return sampleRate + 'Hz';
+}
+
 function promisifyCommand(command: any, run = 'run') {
   return Promise.promisify((...args: any[]) => {
     const cb = args.pop();
@@ -551,45 +564,56 @@ class AnimeEntryInspector {
 
   async solveVideoFile(
     file: string,
-    existMka: boolean,
-    subtitles: Array<string>
+    subtitles: Array<string>,
+    mkaPath: string
   ): Promise<animeEntryInfoVideoType | null> {
     let audioTrack: Array<string> = [];
+    let resolution: string = '';
 
     try {
+      const resolveAudioTrack = (stream: any, isMka: boolean = false) => {
+        let audioTrackInfo = isMka ? 'MKA:' : '';
+        // add language
+        audioTrackInfo += stream.tags?.language ? '[' + languages[stream.tags.language] + '] ' : '';
+        // add language title
+        audioTrackInfo += stream.tags.title ? '<' + stream.tags.title + '> ' : '';
+        // add name
+        audioTrackInfo += stream.codec_name.toUpperCase() + ', ';
+        // add channels
+        audioTrackInfo += stream.channels + 'ch, ';
+        // add sample rate
+        audioTrackInfo += formatSampleRate(stream.sample_rate);
+
+        audioTrack.push(audioTrackInfo);
+      };
+
       const metadata: any = await ffprobe(file);
-      let width = 0;
-      let height = 0;
+
       metadata.streams.forEach((stream: any) => {
         if (stream.codec_type === 'video') {
-          width = stream.width;
-          height = stream.height;
+          resolution = stream.width + 'x' + stream.height;
         } else if (stream.codec_type === 'subtitle' && stream.tags?.language) {
           // include internal subtitle track
           subtitles.push(languages[stream.tags.language] + (stream.tags.title ? '(' + stream.tags.title + ')' : ''));
         } else if (stream.codec_type === 'audio') {
-          let audioTrackInfo = '';
-          // add language
-          audioTrackInfo += stream.tags?.language ? languages[stream.tags.language] + ' ' : '';
-          // add language title
-          audioTrackInfo += stream.tags.title ? '(' + stream.tags.title + ') ' : '';
-          // add name
-          audioTrackInfo += stream.codec_name ? stream.codec_name.toUpperCase() + ' ' : '';
-          // add channels
-          audioTrackInfo += stream.channels ? stream.channels + 'ch ' : '';
-          // add sample rate
-          audioTrackInfo += stream.sample_rate ? stream.sample_rate : '';
-          audioTrack.push(audioTrackInfo);
+          resolveAudioTrack(stream);
         }
       });
 
-      if (existMka) audioTrack.push('MKA');
+      if (mkaPath !== '') {
+        const mkaData: any = await ffprobe(mkaPath);
+        mkaData.streams.forEach((stream: any) => {
+          if (stream.codec_type === 'audio') {
+            resolveAudioTrack(stream, true);
+          }
+        });
+      }
 
       return {
         basename: path.basename(file),
         duration: formatTime(metadata.format.duration),
         size: formatBytes(metadata.format.size),
-        resolution: width + 'x' + height,
+        resolution: resolution,
         audio: audioTrack,
         subtitles: subtitles,
       };
@@ -644,7 +668,7 @@ class AnimeEntryInspector {
           }
         });
 
-        solveVideoAwait.push(this.solveVideoFile(file, existMka, subtitles));
+        solveVideoAwait.push(this.solveVideoFile(file, subtitles, existMka ? mkaPath : ''));
       });
 
       const videos: Array<animeEntryInfoVideoType | null> = await Promise.all(solveVideoAwait);

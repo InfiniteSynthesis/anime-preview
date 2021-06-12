@@ -20,8 +20,6 @@ class LeftNav extends React.Component<{}, { animeInfoList: string[]; selected: s
     ipcRenderer.on('clearEntrySelect', this.clearEntrySelect);
     ipcRenderer.on('showAnimeDeleteQuestionMessage', this.showAnimeDeleteQuestionMessage);
     this.setState({ animeInfoList: await ipcRenderer.invoke('getAnimeList') });
-    // nav is unique, so load settings after it is once rendered
-    this.context.updateSettings(await ipcRenderer.invoke('getSettings'));
   }
 
   componentWillUnmount() {
@@ -92,10 +90,9 @@ class LeftNav extends React.Component<{}, { animeInfoList: string[]; selected: s
 
     return (
       <div className="leftNav unselectable" style={{ width: this.context.settings.navigatorWidth + 'vw' }}>
-        <div className="titleWrapper">
-          <span style={{ fontSize: this.context.settings.navigatorTitleFontSize + 'px' }}>
-            Anime List [{this.state.animeInfoList.length}]
-          </span>
+        <div className="titleWrapper leftNavTitleWrapper">
+          <h2 style={{ fontSize: this.context.settings.navigatorTitleFontSize + 'px' }}>Anime List</h2>
+          <div className="leftNavAnimeAmount">{this.state.animeInfoList.length}</div>
           {this.renderNavOperationList()}
         </div>
 

@@ -17,6 +17,7 @@ class Container extends React.Component<{}, {}> {
     }
 
     ipcRenderer.on('updateSettings', this.updateSettings);
+    this.context.updateSettings(await ipcRenderer.invoke('getSettings'));
   }
 
   componentWillUnmount() {

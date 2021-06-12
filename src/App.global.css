@@ -119,6 +119,22 @@ input:focus {
   align-items: center;
 }
 
+.panelSection {
+  padding: 10px;
+  border: solid thin transparent;
+  border-radius: 5px;
+  background-color: transparent;
+  transition: all ease 0.3s;
+}
+
+.panelSection:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.panelSection:active {
+  border: solid white thin;
+}
+
 .container {
   display: flex;
   flex-direction: row;

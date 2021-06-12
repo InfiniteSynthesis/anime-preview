@@ -11,6 +11,26 @@
   box-sizing: border-box;
 }
 
+.leftNavTitleWrapper > h2 {
+  margin: 0;
+}
+
+.leftNavTitleWrapper .leftNavAnimeAmount {
+  height: 20px;
+  padding: 0 6px;
+  margin: 0 auto 0 10px;
+  display: flex;
+  align-self: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 12px;
+  line-height: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  color: white;
+  border-radius: 10px;
+  text-align: center;
+}
+
 .animeList {
   background-color: rgba(255, 255, 255, 0.25);
   flex-grow: 1;
