@@ -47,18 +47,30 @@
 }
 
 .animeEntryDragging {
-  background-color: pink;
+  background-color: var(--theme-color);
+  border-radius: 5px;
 }
 
 .animeEntrySelected {
   position: absolute;
   width: 5px;
   height: 1.5em;
-  background-color: pink;
+  background-color: var(--theme-color);
 }
 
 .animeEntry > span {
   margin: 0.8em 10px;
+  text-decoration: none;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to right, var(--theme-color), var(--theme-color) 50%, black 50%);
+  background-size: 200% 100%;
+  background-position: 100%;
+}
+
+.animeEntry:hover > span {
+  transition: all 0.3s cubic-bezier(0, 0, 0.23, 1);
+  background-position: 0%;
 }
 
 .animeEntryDragWrapper {
@@ -97,4 +109,10 @@
 .leftNavToolbar > li > svg {
   width: 25px;
   height: 25px;
+  opacity: 0.6;
+  transition: all ease 0.3s;
+}
+
+.leftNavToolbar > li:hover > svg {
+  opacity: 1;
 }

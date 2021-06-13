@@ -108,12 +108,12 @@ class VideoCard extends React.Component<
   static contextType = DialogContext;
   context!: React.ContextType<typeof DialogContext>;
 
-  async componentDidMount(): Promise<void> {
+  async componentDidMount() {
     const snapshotPath = await ipcRenderer.invoke('getVideoSnapshotPath', this.props.videoPath);
     this.setState({ snapshotPath: snapshotPath });
   }
 
-  handleContextMenu(event: React.MouseEvent): void {
+  handleContextMenu(event: React.MouseEvent) {
     event.preventDefault();
     this.setState({
       contextMenuOpen: true,
@@ -121,7 +121,7 @@ class VideoCard extends React.Component<
     });
   }
 
-  handleEpisodeInfoClick(type: 'title' | 'secondTitle' | 'desc'): void {
+  handleEpisodeInfoClick(type: 'title' | 'secondTitle' | 'desc') {
     const videoInfo: animeEntryInfoVideoType = this.props.videoCardInfo;
     const dialogMode = type === 'desc' ? 'promptTextarea' : 'prompt';
     let value: string = '';
@@ -145,7 +145,7 @@ class VideoCard extends React.Component<
     });
   }
 
-  handleSnapshotClick(): void {
+  handleSnapshotClick() {
     this.context.openDialog('prompt', {
       type: 'videoSnapshot',
       value: '',
@@ -154,24 +154,24 @@ class VideoCard extends React.Component<
     });
   }
 
-  handleShowDesc(): void {
+  handleShowDesc() {
     if (this.desc.current) {
       this.desc.current.style.animation = 'anime-card-show 1s ease forwards';
     }
   }
 
-  handleHideDesc(): void {
+  handleHideDesc() {
     if (this.desc.current) {
       this.desc.current.style.animation = 'anime-card-hide 1s ease forwards';
     }
   }
 
-  handleSubtitleClick(ext: string): void {
+  handleSubtitleClick(ext: string) {
     const parsed = path.parse(this.props.videoPath);
     ipcRenderer.send('shellShowItem', path.join(parsed.dir, parsed.name + ext));
   }
 
-  handleMkaClick(): void {
+  handleMkaClick() {
     const parsed = path.parse(this.props.videoPath);
     ipcRenderer.send('shellShowItem', path.join(parsed.dir, parsed.name + '.mka'));
   }
@@ -224,20 +224,16 @@ class VideoCard extends React.Component<
       </p>
     ) : null;
 
+    // show subtitles
     const subtitleSpans: Array<JSX.Element> = videoInfo.subtitles.map((subtitle: string, index: number) => {
-      const dotIndex = subtitle.lastIndexOf('.');
-      let subtitleShow: string = '';
-      if (dotIndex === -1) {
-        subtitleShow = subtitle;
-      } else {
-        subtitleShow = subtitle.slice(1).toUpperCase();
-      }
+      const isBuiltIn = subtitle[0] !== '.';
+      const subtitleShow: string = isBuiltIn ? subtitle : subtitle.slice(1).toUpperCase();
 
       return (
         <div
-          className={(dotIndex === -1 ? '' : 'pointerCursor ') + 'videoCardPanelSubtitle unselectable'}
-          style={{ backgroundColor: subtitle[0] === '.' ? 'lightblue' : 'lightgreen' }}
-          onClick={dotIndex === -1 ? undefined : () => this.handleSubtitleClick(subtitle)}
+          className={(isBuiltIn ? '' : 'pointerCursor ') + 'videoCardPanelSubtitle unselectable'}
+          style={{ backgroundColor: isBuiltIn ? 'lightblue' : 'lightgreen' }}
+          onClick={isBuiltIn ? undefined : () => this.handleSubtitleClick(subtitle)}
           key={index}>
           {icons.caption} {subtitleShow}
         </div>
@@ -253,7 +249,7 @@ class VideoCard extends React.Component<
         return (
           <div
             className="videoCardPanelAudio pointerCursor unselectable"
-            style={{ backgroundColor: 'SeaShell' }}
+            style={{ backgroundColor: 'Sea shell' }}
             key={index}
             onClick={() => this.handleMkaClick()}
             title={audio.slice(4)}>
@@ -360,7 +356,7 @@ class VideoSection extends React.Component<
   static contextType = DialogContext;
   context!: React.ContextType<typeof DialogContext>;
 
-  handleRenameClick(): void {
+  handleRenameClick() {
     this.context.openDialog('prompt', {
       type: 'videoSectionTitle',
       value: this.props.videoSectionInfo.name ? this.props.videoSectionInfo.name : this.props.videoSectionInfo.dirname,
@@ -369,21 +365,21 @@ class VideoSection extends React.Component<
     });
   }
 
-  handleShowHideClick(): void {
+  handleShowHideClick() {
     const currentState = !this.state.isArchived;
     this.setState({ isArchived: currentState });
   }
 
-  handleLayoutModeClick(): void {
+  handleLayoutModeClick() {
     const currentMode = !this.state.isListLayout;
     this.setState({ isListLayout: currentMode });
   }
 
-  handleOpenClick(): void {
+  handleOpenClick() {
     ipcRenderer.send('shellOpenPath', path.join(this.props.path, this.props.videoSectionInfo.dirname));
   }
 
-  handleEpisodeDataClick(): void {
+  handleEpisodeDataClick() {
     this.context.openDialog('prompt', {
       type: 'fetchEpisodeData',
       value: '',
@@ -392,7 +388,7 @@ class VideoSection extends React.Component<
     });
   }
 
-  handleSortClick(): void {
+  handleSortClick() {
     let videoList: Array<string> = [this.props.videoSectionInfo.dirname];
     this.props.videoSectionInfo.videos.forEach((video) => {
       videoList.push(video.title ? video.title : video.basename);
@@ -494,7 +490,7 @@ class AnimeTab extends React.Component<{ entryInfo: animeEntryInfoType }, {}> {
   static contextType = DialogContext;
   context!: React.ContextType<typeof DialogContext>;
 
-  handleRenameClick(): void {
+  handleRenameClick() {
     this.context.openDialog('prompt', {
       type: 'title',
       value: this.props.entryInfo.title,
@@ -502,7 +498,7 @@ class AnimeTab extends React.Component<{ entryInfo: animeEntryInfoType }, {}> {
     });
   }
 
-  handleFetchMetadataByIDClick(): void {
+  handleFetchMetadataByIDClick() {
     this.context.openDialog('prompt', {
       type: 'fetchMetadataByID',
       value: '',
@@ -510,7 +506,7 @@ class AnimeTab extends React.Component<{ entryInfo: animeEntryInfoType }, {}> {
     });
   }
 
-  handleFetchMetadataByNameClick(): void {
+  handleFetchMetadataByNameClick() {
     this.context.openDialog('prompt', {
       type: 'fetchMetadataByName',
       value: this.props.entryInfo.title,

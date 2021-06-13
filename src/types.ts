@@ -1,6 +1,7 @@
 export interface SettingsListType {
   windowWidth: number;
   windowHeight: number;
+  themeColor: string;
   backgroundType: 'color' | 'image' | 'folder';
   backgroundValue: string;
   backgroundOpacity: number;
@@ -22,6 +23,7 @@ export interface SettingsListType {
 export const defaultSettings: SettingsListType = {
   windowWidth: 1200,
   windowHeight: 800,
+  themeColor: '',
   backgroundType: 'image',
   backgroundValue: '../assets/background.jpg',
   backgroundOpacity: 0.4,

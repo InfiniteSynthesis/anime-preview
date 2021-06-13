@@ -277,8 +277,12 @@ ipcMain.handle('getBackgroundImage', (_event: Electron.IpcMainEvent): string => 
 });
 
 ipcMain.on('updateSettings', (event: Electron.IpcMainEvent, newSettings: SettingsListType) => {
+  const backgroundShouldUpdate =
+    newSettings.backgroundType !== settings.getSettings().backgroundType ||
+    newSettings.backgroundValue !== settings.getSettings().backgroundValue;
   settings.updateSettings(newSettings);
-  event.reply('updateSettings', settings.getSettings(), settings.getBackgroundCSS());
+  event.reply('updateSettings', settings.getSettings());
+  if (backgroundShouldUpdate) event.reply('updateBackground', settings.getBackgroundCSS());
 });
 
 /*****************************************************************************
@@ -357,7 +361,7 @@ class AnimeInfoList {
     this.animeInfoListData = newAnimeInfoList;
   }
 
-  sort(mode: 'name' | 'date'): void {
+  sort(mode: 'name' | 'date') {
     if (mode === 'name') {
       this.animeInfoListData.sort(function (a, b) {
         return a.title > b.title ? 1 : -1;
@@ -367,7 +371,7 @@ class AnimeInfoList {
     }
   }
 
-  save(): void {
+  save() {
     writeJsonToFile(this.animeInfoListData, this.animeInfoListPath);
   }
 }
@@ -384,7 +388,7 @@ ipcMain.handle('getAnimeList', (_event: Electron.IpcMainEvent): string[] => {
 /**
  * ipc updateAnimeInfoList
  */
-ipcMain.on('updateAnimeInfoList', (_event: Electron.IpcMainEvent, sourceIdx: number, destinationIdx: number): void => {
+ipcMain.on('updateAnimeInfoList', (_event: Electron.IpcMainEvent, sourceIdx: number, destinationIdx: number) => {
   animeInfoList.updateAnimeInfoList(sourceIdx, destinationIdx);
 });
 
@@ -526,7 +530,7 @@ class AnimeEntryInspector {
     }
   }
 
-  saveToFile(): void {
+  saveToFile() {
     writeJsonToFile(this.animeEntryInfo, path.join(animeEntryPath, this.animeEntryInfo.title + '.json'));
   }
 
@@ -820,7 +824,7 @@ class AnimeEntryInspector {
     this.saveToFile();
   }
 
-  updateAnimeInfoVideoSectionTitle(dirname: string, newTitle: string): void {
+  updateAnimeInfoVideoSectionTitle(dirname: string, newTitle: string) {
     for (let entry of this.animeEntryInfo.video) {
       if (entry.dirname === dirname) {
         entry.name = newTitle;
@@ -844,7 +848,7 @@ class AnimeEntryInspector {
   updateAnimeInfoVideoEpisodeData(
     dirname: string,
     episodeData: Array<{ title: string; secondTitle: string; airdate: string; desc: string }>
-  ): void {
+  ) {
     for (let entry of this.animeEntryInfo.video) {
       if (entry.dirname === dirname) {
         const minIdx = Math.min(entry.videos.length, episodeData.length);

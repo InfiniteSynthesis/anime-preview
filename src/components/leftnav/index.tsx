@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React from 'react';
 import './leftnav.global.css';
 import { DialogContext } from '../dialog';
 import { icons } from '../utilities';
@@ -6,11 +6,8 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { ipcRenderer } from 'electron';
 import { Menu, MenuItem, MenuButton, MenuHeader, MenuDivider } from '@szhsin/react-menu';
 
-class LeftNav extends React.Component<{}, { animeInfoList: string[]; selected: string | undefined }> {
-  state = {
-    animeInfoList: [],
-    selected: undefined,
-  };
+class LeftNav extends React.Component<{}, { animeInfoList: Array<string>; selected: string | undefined }> {
+  state = { animeInfoList: [], selected: undefined };
 
   static contextType = DialogContext;
   context!: React.ContextType<typeof DialogContext>;
@@ -61,67 +58,65 @@ class LeftNav extends React.Component<{}, { animeInfoList: string[]; selected: s
     this.setState({ animeInfoList: newAnimeInfoList });
   };
 
-  handleSortClick(mode: 'name' | 'date'): void {
+  handleSortClick(mode: 'name' | 'date') {
     (async () => {
       this.setState({ animeInfoList: await ipcRenderer.invoke('sortAnimeInfoList', mode) });
     })();
   }
 
-  renderNavOperationList(): JSX.Element {
-    return (
-      <Menu menuButton={<MenuButton>{icons.list}</MenuButton>} align="end">
-        <MenuHeader>Add</MenuHeader>
-        <MenuItem onClick={() => ipcRenderer.send('selectAnimeFolder')}>Folder</MenuItem>
-        <MenuItem onClick={() => ipcRenderer.send('selectAnimeContainingFolder')}>Directory</MenuItem>
+  render(): JSX.Element {
+    const navHeader: JSX.Element = (
+      <div className="titleWrapper leftNavTitleWrapper">
+        <h2 style={{ fontSize: this.context.settings.navigatorTitleFontSize + 'px' }}>Anime List</h2>
+        <div className="leftNavAnimeAmount">{this.state.animeInfoList.length}</div>
+        <Menu menuButton={<MenuButton>{icons.list}</MenuButton>} align="end">
+          <MenuHeader>Add</MenuHeader>
+          <MenuItem onClick={() => ipcRenderer.send('selectAnimeFolder')}>Folder</MenuItem>
+          <MenuItem onClick={() => ipcRenderer.send('selectAnimeContainingFolder')}>Directory</MenuItem>
 
-        <MenuDivider />
-        <MenuHeader>Sort By</MenuHeader>
-        <MenuItem onClick={() => this.handleSortClick('name')}>Name</MenuItem>
-        <MenuItem onClick={() => this.handleSortClick('date')}>On Air Date</MenuItem>
-      </Menu>
+          <MenuDivider />
+          <MenuHeader>Sort By</MenuHeader>
+          <MenuItem onClick={() => this.handleSortClick('name')}>Name</MenuItem>
+          <MenuItem onClick={() => this.handleSortClick('date')}>On Air Date</MenuItem>
+        </Menu>
+      </div>
     );
-  }
 
-  render() {
-    const ulStyle: React.CSSProperties = {
-      fontSize: this.context.settings.navigatorFontSize + 'px',
-      color: this.context.settings.navigatorColor,
+    const isDraggable = this.context.settings.navigatorDraggable;
+    const entryFontColor: React.CSSProperties = {
+      backgroundImage:
+        'linear-gradient(to right, var(--theme-color), var(--theme-color) 50%, ' +
+        (this.context.settings.navigatorColor === '' ? 'black' : this.context.settings.navigatorColor) +
+        ' 50%)',
     };
-
-    return (
-      <div className="leftNav unselectable" style={{ width: this.context.settings.navigatorWidth + 'vw' }}>
-        <div className="titleWrapper leftNavTitleWrapper">
-          <h2 style={{ fontSize: this.context.settings.navigatorTitleFontSize + 'px' }}>Anime List</h2>
-          <div className="leftNavAnimeAmount">{this.state.animeInfoList.length}</div>
-          {this.renderNavOperationList()}
-        </div>
-
-        <DragDropContext onDragEnd={this.onDragEnd}>
-          <Droppable isDropDisabled={!this.context.settings.navigatorDraggable} droppableId="characters">
-            {(provided, _snapshot) => (
-              <ul
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="animeList innerScrollList"
-                style={ulStyle}>
-                {this.state.animeInfoList.map((title: string, index: number) => (
-                  <Draggable
-                    key={title}
-                    draggableId={title}
-                    index={index}
-                    isDragDisabled={!this.context.settings.navigatorDraggable}>
+    const navAnimeEntryList = (
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable isDropDisabled={!isDraggable} droppableId="characters">
+          {(provided, _snapshot) => (
+            <ul
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="animeList innerScrollList"
+              style={{ fontSize: this.context.settings.navigatorFontSize + 'px' }}>
+              {this.state.animeInfoList.map(
+                (title: string, index: number): JSX.Element => (
+                  <Draggable key={title} draggableId={title} index={index} isDragDisabled={!isDraggable}>
                     {(provided, snapshot) => (
                       <li
                         className={(snapshot.isDragging ? 'animeEntryDragging ' : '') + 'animeEntry pointerCursor'}
                         onClick={() => this.handleClick(title)}
                         ref={provided.innerRef}
                         {...provided.draggableProps}>
-                        <span className={this.context.settings.navigatorOneLineText ? 'oneLineText' : ''}>{title}</span>
+                        <span
+                          className={this.context.settings.navigatorOneLineText ? 'oneLineText' : ''}
+                          style={entryFontColor}>
+                          {title}
+                        </span>
                         <div
                           className="animeEntryDragWrapper"
                           {...provided.dragHandleProps}
                           style={{
-                            display: this.context.settings.navigatorDraggable ? 'block' : 'none',
+                            display: isDraggable ? 'block' : 'none',
                             opacity: snapshot.isDragging ? 1 : undefined,
                           }}>
                           {icons.dragIcon}
@@ -132,21 +127,32 @@ class LeftNav extends React.Component<{}, { animeInfoList: string[]; selected: s
                       </li>
                     )}
                   </Draggable>
-                ))}
-                {provided.placeholder}
-              </ul>
-            )}
-          </Droppable>
-        </DragDropContext>
-        <ul className="leftNavToolbar rowWrapper">
-          <li onClick={() => this.context.openDialog('settings', { type: '', value: '' })}>{icons.settings}</li>
-          <li
-            onClick={() => {
-              ipcRenderer.send('shellOpenUrl', 'https://github.com/InfiniteSynthesis/anime-preview');
-            }}>
-            {icons.github}
-          </li>
-        </ul>
+                )
+              )}
+              {provided.placeholder}
+            </ul>
+          )}
+        </Droppable>
+      </DragDropContext>
+    );
+
+    const navToolbar: JSX.Element = (
+      <ul className="leftNavToolbar rowWrapper">
+        <li onClick={() => this.context.openDialog('settings', { type: '', value: '' })}>{icons.settings}</li>
+        <li
+          onClick={() => {
+            ipcRenderer.send('shellOpenUrl', 'https://github.com/InfiniteSynthesis/anime-preview');
+          }}>
+          {icons.github}
+        </li>
+      </ul>
+    );
+
+    return (
+      <div className="leftNav unselectable" style={{ width: this.context.settings.navigatorWidth + 'vw' }}>
+        {navHeader}
+        {navAnimeEntryList}
+        {navToolbar}
       </div>
     );
   }

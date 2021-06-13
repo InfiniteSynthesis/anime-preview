@@ -67,10 +67,10 @@ const customSelectTheme = (theme: any) => ({
   borderRadius: 0,
   colors: {
     ...theme.colors,
-    primary: 'pink',
-    primary75: 'rgba(255, 192, 203, 0.75)',
-    primary50: 'rgba(255, 192, 203, 0.5)',
-    primary25: 'rgba(255, 192, 203, 0.25)',
+    primary: 'var(--theme-color)',
+    primary75: 'var(--theme-color75)',
+    primary50: 'var(--theme-color50)',
+    primary25: 'var(--theme-color25)',
   },
 });
 
@@ -185,15 +185,18 @@ class PanelColorInput extends React.Component<
 > {
   state = { value: '', info: undefined };
 
+  colorSpan: React.RefObject<HTMLSpanElement> = React.createRef();
+
   componentDidMount() {
     this.setState({ value: this.props.value });
+    if (this.colorSpan.current) this.colorSpan.current.style.background = this.props.value;
   }
 
   render(): JSX.Element {
     const colorTester = new Option().style;
 
     return (
-      <div className="panelInputWrapper">
+      <div className="panelInputWrapper rowWrapper">
         <input
           type="text"
           className="longInput"
@@ -206,36 +209,64 @@ class PanelColorInput extends React.Component<
             if (newColor === '') {
               this.setState({ info: undefined });
               this.props.updateSettings('');
+              if (this.colorSpan.current) this.colorSpan.current.style.background = '';
             } else if (colorTester.color === '') {
               this.setState({ info: 'Invalid color style.' });
+              if (this.colorSpan.current) this.colorSpan.current.style.background = '';
             } else {
               this.setState({ info: undefined });
               this.props.updateSettings(newColor);
+              if (this.colorSpan.current) this.colorSpan.current.style.background = newColor;
             }
           }}
         />
         {this.state.info ? <label>{this.state.info}</label> : undefined}
+        <span ref={this.colorSpan} />
       </div>
     );
   }
 }
 
-class DialogSettings extends React.Component<{ closeDialog: () => void }, { tab: string; settings: SettingsListType }> {
-  state = { tab: 'General', settings: defaultSettings };
+class DialogSettings extends React.Component<
+  { closeDialog: () => void },
+  { tab: string; generalPanel: JSX.Element; settings: SettingsListType }
+> {
+  state = {
+    tab: 'General',
+    generalPanel: <div className="settingsPanel innerScrollList" />,
+    settings: defaultSettings,
+  };
 
   static contextType = DialogContext;
   context!: React.ContextType<typeof DialogContext>;
 
   async componentDidMount() {
     this.setState({ settings: await ipcRenderer.invoke('getSettings') });
+    this.setState({ generalPanel: this.renderGeneral() });
   }
 
-  handleTabClick(newTab: string): void {
+  handleTabClick(newTab: string) {
     this.setState({ tab: newTab });
   }
 
   renderGeneral(): JSX.Element {
-    return <div></div>;
+    return (
+      <div className="settingsPanel innerScrollList">
+        <PanelSection
+          category="Theme"
+          name="Color"
+          desc="Controls the main color of anime preview. If not set, this defaults to pink.">
+          <PanelColorInput
+            value={this.state.settings.themeColor}
+            updateSettings={(newColor: string) => {
+              let newSettings = this.state.settings;
+              newSettings.themeColor = newColor;
+              this.setState({ settings: newSettings });
+            }}
+          />
+        </PanelSection>
+      </div>
+    );
   }
 
   renderAppearance(): JSX.Element {
@@ -476,7 +507,7 @@ class DialogSettings extends React.Component<{ closeDialog: () => void }, { tab:
   renderPanel(): JSX.Element {
     switch (this.state.tab) {
       case 'General':
-        return this.renderGeneral();
+        return this.state.generalPanel;
       case 'Appearance':
         return this.renderAppearance();
       case 'Navigator':
@@ -503,7 +534,7 @@ class DialogSettings extends React.Component<{ closeDialog: () => void }, { tab:
         <li
           key={tab}
           className="pointerCursor unselectable"
-          style={isSelected ? { backgroundColor: 'pink' } : undefined}
+          style={isSelected ? { backgroundColor: 'var(--theme-color)' } : undefined}
           onClick={
             isSelected
               ? undefined
@@ -554,7 +585,7 @@ class DialogSortList extends React.Component<
     document.removeEventListener('keydown', this.handleEnterDown);
   }
 
-  handleEnterDown = (event: KeyboardEvent): void => {
+  handleEnterDown = (event: KeyboardEvent) => {
     if (event.defaultPrevented) {
       return;
     } else if (event.key === 'Enter') {
@@ -647,7 +678,7 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
     document.removeEventListener('keydown', this.handleEscDown);
   }
 
-  handleEscDown = (event: KeyboardEvent): void => {
+  handleEscDown = (event: KeyboardEvent) => {
     if (event.defaultPrevented) {
       return;
     } else if (event.key === 'Escape') {
@@ -655,7 +686,7 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
     }
   };
 
-  handleEnterDown = (event: KeyboardEvent): void => {
+  handleEnterDown = (event: KeyboardEvent) => {
     if (event.defaultPrevented) {
       return;
     } else if (event.key === 'Enter') {
@@ -667,7 +698,7 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
     this.setState({ result: bangumiID });
   }
 
-  async handleClickOK(): Promise<void> {
+  async handleClickOK() {
     let options = this.context.options;
     switch (options.type) {
       case 'title':
@@ -715,7 +746,7 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
     this.context.closeDialog();
   }
 
-  disableEvent(event: React.MouseEvent): void {
+  disableEvent(event: React.MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
   }
@@ -801,7 +832,7 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
         selectOptions.push(
           <li
             className="pointerCursor"
-            style={this.state.result === animeInfo[index] ? { backgroundColor: 'pink' } : undefined}
+            style={this.state.result === animeInfo[index] ? { backgroundColor: 'var(--theme-color)' } : undefined}
             key={index}
             onClick={() => this.handleSelectOptionClick(animeInfo[index])}>
             <img src={animeInfo[index + 3]} />

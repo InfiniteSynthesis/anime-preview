@@ -60,11 +60,11 @@
 }
 
 .dialogSettingsNav > li:hover {
-  background-color: rgba(255, 192, 203, 0.5);
+  background-color: var(--theme-color50);
 }
 
 .dialogSettingsNav > li:active {
-  background-color: pink;
+  background-color: var(--theme-color);
 }
 
 .settingsPanel {
@@ -87,11 +87,13 @@
 .settingsPanel .longInput {
   padding: 2px 8px;
   width: 90%;
+  box-sizing: border-box;
 }
 
 .settingsPanel .shortInput {
   padding: 2px 8px;
   width: 40%;
+  box-sizing: border-box;
 }
 
 .panelInputWrapper {
@@ -99,7 +101,7 @@
 }
 
 .panelInputWrapper .shortInput + label {
-  width: calc(40% + 16px);
+  width: 40%;
   padding: 5px;
   border: solid red 2px;
   position: absolute;
@@ -110,7 +112,7 @@
 }
 
 .panelInputWrapper .longInput + label {
-  width: calc(90% + 16px);
+  width: 90%;
   padding: 5px;
   border: solid red 2px;
   position: absolute;
@@ -118,6 +120,13 @@
   top: 100%;
   background-color: rgba(255, 0, 0, 0.6);
   box-sizing: border-box;
+}
+
+.panelInputWrapper > .longInput + span {
+  width: 15px;
+  height: 15px;
+  margin-left: 10px;
+  border-radius: 50%;
 }
 
 .settingPanelSelect {
@@ -210,7 +219,7 @@
 .checkboxWrapper > label.checkboxChecked::before {
   display: block;
   content: '\2714';
-  background-color: pink;
+  background-color: var(--theme-color);
 }
 
 /* dialog select list */
@@ -235,7 +244,7 @@
 }
 
 .dialogSelectList ul > li:hover {
-  background-color: rgba(255, 192, 203, 0.5);
+  background-color: var(--theme-color50);
 }
 
 .dialogSelectList ul > li > section > p:first-child {
@@ -300,17 +309,19 @@
 }
 
 .buttonOK {
-  background-color: pink;
+  background-color: var(--theme-color);
   transition: all ease 0.3s;
 }
+
 .buttonOK:hover {
-  background: rgba(255, 192, 203, 0.75);
+  background: var(--theme-color75);
 }
 
 .buttonCancel {
   background: #ccc;
   transition: all ease 0.3s;
 }
+
 .buttonCancel:hover {
   background: #bbb;
 }
