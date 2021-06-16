@@ -46,6 +46,10 @@ export default merge(baseConfig, {
       name: '[name]',
     }),
 
+    new webpack.DefinePlugin({
+      'process.env.FLUENTFFMPEG_COV': false,
+    }),
+
     /**
      * Create global constants which can be configured at compile time.
      *

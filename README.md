@@ -13,8 +13,6 @@ cd your-project-name
 yarn
 ```
 
-> If `yarn` returns the error regarding `./lib-cov/fluent-ffmpeg`, just go ahead as it does not matter.
-
 ## Starting Development
 
 Start the app in the `dev` environment:
