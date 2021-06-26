@@ -68,7 +68,7 @@
 }
 
 .settingsPanel {
-  padding: 10px;
+  padding: 10px 10px 30px 10px;
   display: flex;
   flex-grow: 1;
   flex-direction: column;
@@ -107,7 +107,7 @@
   position: absolute;
   left: 0;
   top: 100%;
-  background-color: rgba(255, 0, 0, 0.6);
+  background-color: rgb(255, 64, 64);
   box-sizing: border-box;
 }
 
@@ -118,7 +118,7 @@
   position: absolute;
   left: 0;
   top: 100%;
-  background-color: rgba(255, 0, 0, 0.6);
+  background-color: rgb(255, 64, 64);
   box-sizing: border-box;
 }
 

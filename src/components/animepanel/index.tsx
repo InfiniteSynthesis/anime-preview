@@ -249,7 +249,7 @@ class VideoCard extends React.Component<
         return (
           <div
             className="videoCardPanelAudio pointerCursor unselectable"
-            style={{ backgroundColor: 'Sea shell' }}
+            style={{ backgroundColor: 'seashell' }}
             key={index}
             onClick={() => this.handleMkaClick()}
             title={audio.slice(4)}>
@@ -263,7 +263,7 @@ class VideoCard extends React.Component<
         return (
           <div
             className="videoCardPanelAudio pointerCursor unselectable"
-            style={{ backgroundColor: 'SeaShell' }}
+            style={{ backgroundColor: 'seashell' }}
             key={index}
             onClick={() => this.handleMkaClick()}>
             {icons.audioTrackMka}
@@ -549,7 +549,7 @@ class AnimeTab extends React.Component<{ entryInfo: animeEntryInfoType }, {}> {
 
         <MenuHeader>Edit</MenuHeader>
         <MenuItem onClick={() => this.handleRenameClick()}>Rename</MenuItem>
-        <MenuItem onClick={() => ipcRenderer.send('animeReInspect')}>Re-Inspect</MenuItem>
+        <MenuItem onClick={() => ipcRenderer.send('animeReInspect', animeEntry.title)}>Re-Inspect</MenuItem>
         <SubMenu label="Metadata">
           <MenuHeader>Fetch By</MenuHeader>
           <MenuItem onClick={() => this.handleFetchMetadataByIDClick()}>Bangumi ID</MenuItem>

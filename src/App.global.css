@@ -158,3 +158,13 @@ input:focus {
   content: '';
   z-index: -10000;
 }
+
+/* style for react-menu */
+
+.rc-menu__item--hover {
+  background-color: var(--theme-color25);
+}
+
+.rc-menu__item--active {
+  background-color: var(--theme-color75);
+}

@@ -85,47 +85,54 @@ class LeftNav extends React.Component<{}, { animeInfoList: Array<string>; select
     const isDraggable = this.context.settings.navigatorDraggable;
     const entryFontColor: React.CSSProperties = {
       backgroundImage:
-        'linear-gradient(to right, var(--theme-color), var(--theme-color) 50%, ' +
+        'linear-gradient(to right, var(--theme-color75), var(--theme-color75) 50%, ' +
         (this.context.settings.navigatorColor === '' ? 'black' : this.context.settings.navigatorColor) +
         ' 50%)',
     };
+
     const navAnimeEntryList = (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable isDropDisabled={!isDraggable} droppableId="characters">
           {(provided, _snapshot) => (
             <ul
-              {...provided.droppableProps}
-              ref={provided.innerRef}
               className="animeList innerScrollList"
-              style={{ fontSize: this.context.settings.navigatorFontSize + 'px' }}>
+              style={{ fontSize: this.context.settings.navigatorFontSize + 'px' }}
+              ref={provided.innerRef}
+              {...provided.droppableProps}>
               {this.state.animeInfoList.map(
                 (title: string, index: number): JSX.Element => (
                   <Draggable key={title} draggableId={title} index={index} isDragDisabled={!isDraggable}>
-                    {(provided, snapshot) => (
-                      <li
-                        className={(snapshot.isDragging ? 'animeEntryDragging ' : '') + 'animeEntry pointerCursor'}
-                        onClick={() => this.handleClick(title)}
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}>
-                        <span
-                          className={this.context.settings.navigatorOneLineText ? 'oneLineText' : ''}
-                          style={entryFontColor}>
-                          {title}
-                        </span>
-                        <div
-                          className="animeEntryDragWrapper"
-                          {...provided.dragHandleProps}
-                          style={{
-                            display: isDraggable ? 'block' : 'none',
-                            opacity: snapshot.isDragging ? 1 : undefined,
-                          }}>
-                          {icons.dragIcon}
-                        </div>
-                        <div
-                          className="animeEntrySelected"
-                          style={{ display: this.state.selected === title ? 'block' : 'none' }}></div>
-                      </li>
-                    )}
+                    {(provided, snapshot) => {
+                      const isSelected: boolean = this.state.selected === title;
+
+                      const dragHandlerStyle: React.CSSProperties = {
+                        display: isDraggable ? 'block' : 'none',
+                        opacity: snapshot.isDragging ? 1 : undefined,
+                      };
+
+                      const spanClassName: string =
+                        (isSelected && !snapshot.isDragging ? '' : 'animeEntrySpan') +
+                        (this.context.settings.navigatorOneLineText ? ' oneLineText' : '');
+
+                      const spanStyle: React.CSSProperties =
+                        isSelected && !snapshot.isDragging ? { color: 'var(--theme-color)' } : entryFontColor;
+
+                      return (
+                        <li
+                          className={(snapshot.isDragging ? 'animeEntryDragging ' : '') + 'animeEntry pointerCursor'}
+                          onClick={() => this.handleClick(title)}
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}>
+                          <span className={spanClassName} style={spanStyle}>
+                            {title}
+                          </span>
+                          <div className="animeEntryDragWrapper" style={dragHandlerStyle} {...provided.dragHandleProps}>
+                            {icons.dragIcon}
+                          </div>
+                          <div className="animeEntrySelected" style={{ display: isSelected ? 'block' : 'none' }}></div>
+                        </li>
+                      );
+                    }}
                   </Draggable>
                 )
               )}

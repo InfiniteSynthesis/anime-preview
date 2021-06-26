@@ -93,6 +93,20 @@
   float: left;
 }
 
+.metadataCharacter > p {
+  text-decoration: none;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to right, var(--theme-color), var(--theme-color) 50%, black 50%);
+  background-size: 200% 100%;
+  background-position: 100%;
+}
+
+.metadataCharacter > p:hover {
+  transition: all 0.3s cubic-bezier(0, 0, 0.23, 1);
+  background-position: 0%;
+}
+
 .metadataCharacter > p:first-child {
   border-bottom: solid thin grey;
 }

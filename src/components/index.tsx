@@ -64,11 +64,13 @@ class Container extends React.Component<{}, {}> {
 
     ipcRenderer.on('updateSettings', this.updateSettings);
     ipcRenderer.on('updateBackground', this.updateBackground);
+    ipcRenderer.on('showAnimeForceInspectQuestionMessage', this.showAnimeForceInspectQuestionMessage);
   }
 
   componentWillUnmount() {
     ipcRenderer.removeListener('updateSettings', this.updateSettings);
     ipcRenderer.removeListener('updateBackground', this.updateBackground);
+    ipcRenderer.removeListener('showAnimeForceInspectQuestionMessage', this.showAnimeForceInspectQuestionMessage);
   }
 
   updateSettings = (_event: Electron.IpcRendererEvent, newSettings: SettingsListType) => {
@@ -79,6 +81,17 @@ class Container extends React.Component<{}, {}> {
     if (this.backgroundProvider.current) {
       this.backgroundProvider.current.style.backgroundImage = backgroundCSS;
     }
+  };
+
+  showAnimeForceInspectQuestionMessage = (_event: Electron.IpcRendererEvent, title: string) => {
+    this.context.openDialog('question', {
+      type: 'forceInspect',
+      value: title,
+      msg:
+        'The anime folder ' +
+        title +
+        ' contains 1000+ files, which may consume a lot of time to inspect and take the snapshots. Do you want to continue?',
+    });
   };
 
   render() {

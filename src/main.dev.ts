@@ -22,6 +22,7 @@ const fetch = require('node-fetch');
 const ffmpeg = require('fluent-ffmpeg');
 const Promise = require('bluebird');
 const md5 = require('js-md5');
+const ProgressBar = require('electron-progressbar');
 
 const ffprobe = Promise.promisify(ffmpeg.ffprobe);
 const animeEntryPath = path.join(app.getPath('userData'), 'Animes');
@@ -46,13 +47,9 @@ export class settingChecker {
     let ffmpegPath = require('ffmpeg-static-electron').path;
     let ffprobePath = require('ffprobe-static-electron').path;
     if (process.env.NODE_ENV === 'production') {
-      if (process.platform === 'win32') {
-        ffmpegPath = ffmpegPath.replace('app.asar', 'node_modules\\ffmpeg-static-electron');
-        ffprobePath = ffprobePath.replace('app.asar', 'node_modules\\ffprobe-static-electron');
-      } else {
-        ffmpegPath = ffmpegPath.replace('app.asar', 'node_modules/ffmpeg-static-electron');
-        ffprobePath = ffprobePath.replace('app.asar', 'node_modules/ffprobe-static-electron');
-      }
+      const sep = process.platform === 'win32' ? '\\' : '/';
+      ffmpegPath = ffmpegPath.replace('app.asar', 'node_modules' + sep + 'ffmpeg-static-electron');
+      ffprobePath = ffprobePath.replace('app.asar', 'node_modules' + sep + 'ffprobe-static-electron');
     }
     ffmpeg.setFfmpegPath(ffmpegPath);
     ffmpeg.setFfprobePath(ffprobePath);
@@ -208,10 +205,6 @@ class Settings {
     return this.settingsData;
   }
 
-  getWindowSize(): { width: number; height: number } {
-    return { width: this.settingsData.windowWidth, height: this.settingsData.windowHeight };
-  }
-
   setWindowSize(width: number, height: number) {
     this.settingsModified = true;
     this.settingsData.windowWidth = width;
@@ -250,6 +243,10 @@ class Settings {
       backgroundCSS = backgroundCSS.replace('\\', '//').replaceAll('\\', '/');
     }
     return backgroundCSS;
+  }
+
+  getThemeColor(): string {
+    return this.settingsData.themeColor === '' ? 'pink' : this.settingsData.themeColor;
   }
 
   save() {
@@ -403,10 +400,13 @@ ipcMain.handle('sortAnimeInfoList', (_event: Electron.IpcMainEvent, mode: 'name'
 /**
  * ipc deleteAnimeEntry
  */
-ipcMain.on('deleteAnimeEntry', async (event: Electron.IpcMainEvent, title: string, deleteData: boolean) => {
+ipcMain.on('deleteAnimeEntry', async (event: Electron.IpcMainEvent, title: string, deleteData: boolean = false) => {
   if (!animeInfoList.existAnime(title)) return;
 
-  if (deleteData) deleteFile(path.join(animeEntryPath, title + '.json'));
+  if (deleteData) {
+    deleteFile(path.join(animeEntryPath, title + '.json'));
+    currentAnimeEntryInspector.removeAllVideoSnapshots();
+  }
 
   animeInfoList.delete(title);
   event.reply('updateAnimeEntry', animeInfoList.getAllAnimeTitle());
@@ -422,14 +422,34 @@ ipcMain.on('animeEntryClick', async (event: Electron.IpcMainEvent, title: string
   if (currentAnimeEntryInspector.parseFromJson()) {
     event.sender.send('createAnimeDetailTab', currentAnimeEntryInspector.getAnimeEntryInfo());
   } else {
-    const inspectResult = await currentAnimeEntryInspector.inspect();
-    if (inspectResult) {
+    const inspectResult: 'OK' | 'fail' | 'question' = await currentAnimeEntryInspector.inspect();
+    if (inspectResult === 'OK') {
       event.sender.send('createAnimeDetailTab', currentAnimeEntryInspector.getAnimeEntryInfo());
-    } else {
+    } else if (inspectResult === 'fail') {
       event.reply('clearEntrySelect');
       event.reply('removeAnimeTab');
       event.reply('showAnimeDeleteQuestionMessage', title);
+    } else {
+      event.reply('clearEntrySelect');
+      event.reply('removeAnimeTab');
+      event.reply('showAnimeForceInspectQuestionMessage', title);
     }
+  }
+});
+
+/**
+ * ipc animeEntryForceInspect
+ */
+ipcMain.on('animeEntryForceInspect', async (event: Electron.IpcMainEvent, title: string) => {
+  const inspectResult: 'OK' | 'fail' | 'question' = await currentAnimeEntryInspector.inspect(false, true);
+  if (inspectResult === 'OK') {
+    event.sender.send('createAnimeDetailTab', currentAnimeEntryInspector.getAnimeEntryInfo());
+  } else if (inspectResult === 'fail') {
+    event.reply('clearEntrySelect');
+    event.reply('removeAnimeTab');
+    event.reply('showAnimeDeleteQuestionMessage', title);
+  } else {
+    // wouldn't return question here, do nothing
   }
 });
 
@@ -508,6 +528,7 @@ ipcMain.on('selectAnimeFolder', async (event: Electron.IpcMainEvent) => {
 class AnimeEntryInspector {
   animeEntryInfo: animeEntryInfoType;
   animeFiles: string[];
+  progressBar: any;
 
   constructor(title: string) {
     this.animeEntryInfo = {
@@ -534,36 +555,82 @@ class AnimeEntryInspector {
     writeJsonToFile(this.animeEntryInfo, path.join(animeEntryPath, this.animeEntryInfo.title + '.json'));
   }
 
-  async inspect(reInspect: boolean = false): Promise<boolean> {
+  async inspect(reInspect: boolean = false, forceInspect: boolean = false): Promise<'OK' | 'fail' | 'question'> {
+    this.progressBar = new ProgressBar({
+      text: 'Inspecting Folder...',
+      detail: 'Resolving files in folder',
+      browserWindow: { parent: mainWindow },
+      style: {
+        text: { fontSize: '26px', color: 'white' },
+        detail: { fontSize: '20px', lineHeight: '20px', color: 'white', overflow: 'hidden' },
+        bar: { background: 'lightgrey' },
+        value: { background: settings.getThemeColor() },
+      },
+    });
+
     try {
       this.animeFiles = glob.sync('/**/*', {
         nobrace: true,
         root: this.animeEntryInfo.path,
       });
     } catch (err) {
-      return false;
+      log.error(err);
+      this.progressBar.close();
+      this.progressBar = null;
+      return 'fail';
     }
 
-    if (this.animeFiles.length === 0) return false;
+    if (this.animeFiles.length === 0) {
+      this.progressBar.close();
+      this.progressBar = null;
+      return 'fail';
+    } else if (this.animeFiles.length > 1000 && !forceInspect) {
+      this.progressBar.close();
+      this.progressBar = null;
+      return 'question';
+    }
 
     if (reInspect) {
       this.animeEntryInfo.video = [];
       this.animeEntryInfo.music = {};
     }
 
-    const solveVideoDone = this.solveVideoFiles();
-    const solveAudioDone = this.solveAudioFiles();
-    await solveVideoDone;
-    await solveAudioDone;
-    // write to file
+    this.progressBar.detail = 'Resolving videos.';
+    await this.solveVideoFiles();
+
+    this.progressBar.detail = 'Resolving audios.';
+    await this.solveAudioFiles();
+
+    this.progressBar.close();
+    this.progressBar = null;
+
     this.saveToFile();
 
-    return true;
+    return 'OK';
   }
 
   setMetadata(metadata: AnimeEntryInfoMetadataType) {
     this.animeEntryInfo.metadata = metadata;
     this.saveToFile();
+  }
+
+  async getVideoSnapshot(targetFile: string, timestamp: string | null = null) {
+    try {
+      const frame = timestamp ? [timestamp] : [Math.floor(Math.random() * 100) + '%'];
+      const snapshotWidth: number = settings.getSettings().videoSnapshotWidth;
+
+      await promisifyCommand(
+        ffmpeg(targetFile),
+        'takeScreenshots'
+      )({
+        timestamps: frame,
+        filename: md5.hex(targetFile) + '.jpg',
+        folder: snapshotCachePath,
+        size: snapshotWidth + 'x?',
+      });
+    } catch (err) {
+      log.error(err);
+    }
   }
 
   async solveVideoFile(
@@ -573,6 +640,8 @@ class AnimeEntryInspector {
   ): Promise<animeEntryInfoVideoType | null> {
     let audioTrack: Array<string> = [];
     let resolution: string = '';
+
+    this.progressBar.detail = 'Resolving: ' + file;
 
     try {
       const resolveAudioTrack = (stream: any, isMka: boolean = false) => {
@@ -612,6 +681,8 @@ class AnimeEntryInspector {
           }
         });
       }
+
+      await this.getVideoSnapshot(file);
 
       return {
         basename: path.basename(file),
@@ -884,6 +955,18 @@ class AnimeEntryInspector {
     }
     this.saveToFile();
   }
+
+  removeAllVideoSnapshots() {
+    for (let section of this.animeEntryInfo.video) {
+      for (let episode of section.videos) {
+        const fullPath: string = path.join(this.animeEntryInfo.path, section.dirname, episode.basename);
+        const snapshotPath = path.join(snapshotCachePath, md5.hex(fullPath) + '.jpg');
+        if (fs.existsSync(snapshotPath)) {
+          deleteFile(snapshotPath);
+        }
+      }
+    }
+  }
 }
 
 let currentAnimeEntryInspector: AnimeEntryInspector;
@@ -930,10 +1013,19 @@ ipcMain.on('updateAnimeTitle', (event: Electron.IpcMainEvent, oldTitle: string, 
 /**
  * ipc reinspect
  */
-ipcMain.on('animeReInspect', async (event: Electron.IpcMainEvent) => {
-  const inspectResult = await currentAnimeEntryInspector.inspect(true);
-  if (inspectResult) {
+ipcMain.on('animeReInspect', async (event: Electron.IpcMainEvent, title: string) => {
+  if (currentAnimeEntryInspector.getAnimeEntryInfo().title !== title) {
+    event.reply('showErrorMessage', 'Re-inspect failed! Check the folder and retry!');
+    return;
+  }
+
+  const inspectResult: 'OK' | 'fail' | 'question' = await currentAnimeEntryInspector.inspect(true);
+  if (inspectResult === 'OK') {
     event.sender.send('createAnimeDetailTab', currentAnimeEntryInspector.getAnimeEntryInfo());
+  } else if (inspectResult === 'fail') {
+    event.reply('showErrorMessage', 'Re-inspect failed! Check the folder and retry!');
+  } else {
+    // Reinspect wouldn't reply question, do nothing.
   }
 });
 
@@ -941,6 +1033,18 @@ ipcMain.on('animeReInspect', async (event: Electron.IpcMainEvent) => {
  * fetch metadata from bangumi by bangumiID
  */
 ipcMain.on('fetchMetadataByID', async (event: Electron.IpcMainEvent, bangumiID: string) => {
+  let progressBar = new ProgressBar({
+    text: 'Fetching metadata from Bangumi...',
+    detail: 'ID: ' + bangumiID,
+    browserWindow: { parent: mainWindow },
+    style: {
+      text: { fontSize: '26px', color: 'white' },
+      detail: { fontSize: '20px', lineHeight: '20px', color: 'white', overflow: 'hidden' },
+      bar: { background: 'lightgrey' },
+      value: { background: settings.getThemeColor() },
+    },
+  });
+
   try {
     const metadataJson = await fetchBangumiAPI(bangumiID);
 
@@ -979,14 +1083,28 @@ ipcMain.on('fetchMetadataByID', async (event: Electron.IpcMainEvent, bangumiID: 
     currentAnimeEntryInspector.setMetadata(metadata);
     event.reply('createAnimeDetailTab', currentAnimeEntryInspector.getAnimeEntryInfo());
   } catch (err) {
+    log.error(err);
     event.reply('showErrorMessage', 'Fetch failed, check your network and bangumi ID.');
   }
+  progressBar.close();
 });
 
 /**
  * fetch metadata from bangumi by Name
  */
 ipcMain.on('fetchMetadataByName', async (event: Electron.IpcMainEvent, name: string) => {
+  let progressBar = new ProgressBar({
+    text: 'Fetching anime information from Bangumi...',
+    detail: 'Anime: ' + name,
+    browserWindow: { parent: mainWindow },
+    style: {
+      text: { fontSize: '26px', color: 'white' },
+      detail: { fontSize: '20px', lineHeight: '20px', color: 'white', overflow: 'hidden' },
+      bar: { background: 'lightgrey' },
+      value: { background: settings.getThemeColor() },
+    },
+  });
+
   try {
     const metadataJson = await searchBangumiAPI(name);
     let animeList: Array<string> = [];
@@ -998,8 +1116,9 @@ ipcMain.on('fetchMetadataByName', async (event: Electron.IpcMainEvent, name: str
     event.reply('showSelectList', animeList);
   } catch (err) {
     log.error(err);
-    event.reply('showErrorMessage', 'Fetch failed, check your network and bangumi ID.');
+    event.reply('showErrorMessage', 'Fetch failed, check your network and anime name.');
   }
+  progressBar.close();
 });
 
 /**
@@ -1056,19 +1175,6 @@ ipcMain.handle(
   async (_event: Electron.IpcMainEvent, file: string): Promise<string> => {
     const cacheMD5 = md5.hex(file);
     const outputPath = path.join(snapshotCachePath, cacheMD5 + '.jpg');
-    if (!fs.existsSync(outputPath)) {
-      try {
-        const timestamp = [Math.floor(Math.random() * 100) + '%'];
-
-        await promisifyCommand(
-          ffmpeg(file),
-          'takeScreenshots'
-        )({ timestamps: timestamp, filename: cacheMD5 + '.jpg', folder: snapshotCachePath, size: '540x?' });
-      } catch (err) {
-        log.error(err);
-      }
-    }
-
     return outputPath;
   }
 );
@@ -1114,11 +1220,12 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: settings.getWindowSize().width,
-    height: settings.getWindowSize().height,
+    width: settings.getSettings().windowWidth,
+    height: settings.getSettings().windowHeight,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
     },
   });
 

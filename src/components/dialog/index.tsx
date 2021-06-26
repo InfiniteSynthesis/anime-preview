@@ -490,13 +490,27 @@ class DialogSettings extends React.Component<
           desc="Controls the default frame of snapshot taken for each episode.">
           <PanelSelection
             settingItem={this.state.settings.videoSnapshotTimestamp}
-            options={['first', 'last', 'random']}
+            options={['first', 'last', 'random', 'custom']}
             setSettings={(value: string | number) => {
-              if (value === 'first' || value === 'last' || value === 'random') {
+              if (value === 'first' || value === 'last' || value === 'random' || value === 'custom') {
                 let newSettings = this.state.settings;
                 newSettings.videoSnapshotTimestamp = value;
                 this.setState({ settings: newSettings });
               }
+            }}
+          />
+        </PanelSection>
+
+        <PanelSection category="Snapshot" name="Resolution" desc="Controls the width of the snapshot (px).">
+          <PanelNumberInput
+            value={this.state.settings.videoSnapshotWidth}
+            minimum={360}
+            maximum={1080}
+            default={defaultSettings.videoSnapshotWidth}
+            updateSettings={(newVal: number) => {
+              let newSettings = this.state.settings;
+              newSettings.videoSnapshotWidth = newVal;
+              this.setState({ settings: newSettings });
             }}
           />
         </PanelSection>
@@ -738,7 +752,9 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
           ipcRenderer.send('fetchEpisodeData', this.state.result, options.info[0]);
         }
         break;
-
+      case 'forceInspect':
+        ipcRenderer.send('animeEntryForceInspect', this.state.result);
+        break;
       default:
         break;
     }
@@ -798,18 +814,32 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
     );
   }
 
+  handleForceInspectDelete() {
+    ipcRenderer.send('deleteAnimeEntry', this.context.options.value);
+    this.context.closeDialog();
+  }
+
   renderQuestion(): JSX.Element {
+    const options = this.context.options;
+    const forceInspectDeleteButton =
+      options.type === 'forceInspect' ? (
+        <button className="buttonOK" onClick={() => this.handleForceInspectDelete()}>
+          Delete
+        </button>
+      ) : undefined;
+
     return (
       <div className="dialog dialogError" onClick={(event) => this.disableEvent(event)}>
         <img src={iconImage} />
-        <p className="dialogMessage">{this.context.options.msg}</p>
+        <p className="dialogMessage">{options.msg}</p>
         <button className="buttonOK" onClick={() => this.handleClickOK()}>
           OK
         </button>
+        {forceInspectDeleteButton}
         <button className="buttonCancel" onClick={() => this.context.closeDialog()}>
           Cancel
         </button>
-        {this.context.options.checked ? (
+        {options.checked ? (
           <div
             className="checkboxWrapper unselectable"
             onClick={() => {
@@ -817,7 +847,7 @@ class Dialog extends React.Component<{}, { result: string; checked: boolean }> {
               this.setState({ checked: newVal });
             }}>
             <label className={(this.state.checked ? 'checkboxChecked ' : '') + 'pointerCursor'} />
-            <p className="pointerCursor">{this.context.options.checkMsg}</p>
+            <p className="pointerCursor">{options.checkMsg}</p>
           </div>
         ) : undefined}
       </div>

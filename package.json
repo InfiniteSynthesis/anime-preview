@@ -246,9 +246,11 @@
   "dependencies": {
     "@szhsin/react-menu": "^1.9.1",
     "bluebird": "^3.7.2",
+    "caniuse-lite": "^1.0.30001237",
     "cue-parser": "^0.3.0",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.3.4",
+    "electron-progressbar": "^2.0.1",
     "ffmpeg-static-electron": "^2.0.1",
     "ffprobe-static-electron": "^2.0.0",
     "fluent-ffmpeg": "^2.1.2",

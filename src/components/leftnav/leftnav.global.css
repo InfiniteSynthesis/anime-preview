@@ -60,15 +60,17 @@
 
 .animeEntry > span {
   margin: 0.8em 10px;
+}
+
+.animeEntry > .animeEntrySpan {
   text-decoration: none;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(to right, var(--theme-color), var(--theme-color) 50%, black 50%);
   background-size: 200% 100%;
   background-position: 100%;
 }
 
-.animeEntry:hover > span {
+.animeEntry:hover > .animeEntrySpan {
   transition: all 0.3s cubic-bezier(0, 0, 0.23, 1);
   background-position: 0%;
 }
