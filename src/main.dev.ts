@@ -1,7 +1,8 @@
 import 'core-js/stable';
-import { app, BrowserWindow, dialog, shell } from 'electron';
-import log from 'electron-log';
 import path from 'path';
+import fs from 'fs';
+import { app, BrowserWindow, dialog, nativeTheme, shell, ipcMain } from 'electron';
+import log from 'electron-log';
 import 'regenerator-runtime/runtime';
 import {
   SettingsListType,
@@ -13,11 +14,10 @@ import {
   animeEntryInfoVideoType,
 } from './types';
 
-const fs = require('fs');
-const { ipcMain } = require('electron');
-const glob = require('glob');
-const musicMetadata = require('music-metadata');
-const cueParser = require('cue-parser');
+import glob from 'glob';
+import * as musicMetadata from 'music-metadata';
+import * as cueParser from 'cue-parser';
+import { IFile, ITrack } from 'cue-parser/lib/types';
 const fetch = require('node-fetch');
 const ffmpeg = require('fluent-ffmpeg');
 const Promise = require('bluebird');
@@ -35,13 +35,8 @@ const snapshotCachePath = path.join(app.getPath('userData'), 'Snapshot Cache');
 export class settingChecker {
   constructor() {
     // check if folders exist
-    if (!fs.existsSync(animeEntryPath)) {
-      fs.mkdirSync(animeEntryPath);
-    }
-
-    if (!fs.existsSync(snapshotCachePath)) {
-      fs.mkdirSync(snapshotCachePath);
-    }
+    if (!fs.existsSync(animeEntryPath)) fs.mkdirSync(animeEntryPath);
+    if (!fs.existsSync(snapshotCachePath)) fs.mkdirSync(snapshotCachePath);
 
     // take care of ffmpeg path
     let ffmpegPath = require('ffmpeg-static-electron').path;
@@ -70,14 +65,14 @@ const languages: { [short: string]: string } = {
 
 function writeJsonToFile(json: any, path: string) {
   const data = JSON.stringify(json, null, 4);
-  fs.writeFile(path, data, (err: Error) => {
+  fs.writeFile(path, data, (err: any) => {
     if (err) throw err;
     console.log('written to ', path);
   });
 }
 
 function deleteFile(path: string) {
-  fs.unlink(path, (err: Error) => {
+  fs.unlink(path, (err: any) => {
     if (err) throw err;
     console.log('delete file ', path);
   });
@@ -128,6 +123,15 @@ function promisifyCommand(command: any, run = 'run') {
       })
       [run](...args);
   });
+}
+
+function getProgressBarFontColor(): string {
+  if (process.platform === 'win32') {
+    return 'black'; // background of modal is always white on windows
+  }
+  // TODO: check linux
+  // darwin:
+  return nativeTheme.shouldUseDarkColors ? 'white' : 'black';
 }
 
 async function fetchBangumiAPI(bangumiID: string): Promise<any> {
@@ -184,13 +188,13 @@ class Settings {
     this.settingsModified = false;
     this.settingsPath = path.join(app.getPath('userData'), options.configName + '.json');
     try {
-      this.settingsData = JSON.parse(fs.readFileSync(this.settingsPath));
+      this.settingsData = JSON.parse(fs.readFileSync(this.settingsPath, 'utf-8'));
     } catch (err) {
       this.settingsData = options.defaults;
-      (this.settingsData.backgroundValue = app.isPackaged
+      this.settingsData.backgroundValue = app.isPackaged
         ? path.join(process.resourcesPath, 'assets/background.jpg')
-        : path.join(__dirname, '../assets/background.jpg')),
-        (this.settingsModified = true);
+        : path.join(__dirname, '../assets/background.jpg');
+      this.settingsModified = true;
     }
   }
 
@@ -230,9 +234,7 @@ class Settings {
         let imageFiles: Array<string> = [];
 
         result.forEach((filePath: string) => {
-          if (imageExt.includes(path.extname(filePath))) {
-            imageFiles.push(filePath);
-          }
+          if (imageExt.includes(path.extname(filePath))) imageFiles.push(filePath);
         });
 
         backgroundCSS = "url('" + imageFiles[Math.floor(Math.random() * imageFiles.length)] + "')";
@@ -250,9 +252,7 @@ class Settings {
   }
 
   save() {
-    if (this.settingsModified) {
-      writeJsonToFile(this.settingsData, this.settingsPath);
-    }
+    if (this.settingsModified) writeJsonToFile(this.settingsData, this.settingsPath);
   }
 }
 
@@ -261,18 +261,26 @@ let settings = new Settings({
   defaults: defaultSettings,
 });
 
+/**
+ * ipc: get settings
+ */
 ipcMain.handle(
   'getSettings',
-  (_event: Electron.IpcMainEvent): SettingsListType => {
+  (_event: Electron.IpcMainInvokeEvent): SettingsListType => {
     return settings.getSettings();
   }
 );
 
-// ipc getBackgroundCSS
-ipcMain.handle('getBackgroundImage', (_event: Electron.IpcMainEvent): string => {
+/**
+ * ipc: get background image
+ */
+ipcMain.handle('getBackgroundImage', (_event: Electron.IpcMainInvokeEvent): string => {
   return settings.getBackgroundCSS();
 });
 
+/**
+ * ipc: update settings
+ */
 ipcMain.on('updateSettings', (event: Electron.IpcMainEvent, newSettings: SettingsListType) => {
   const backgroundShouldUpdate =
     newSettings.backgroundType !== settings.getSettings().backgroundType ||
@@ -294,7 +302,7 @@ class AnimeInfoList {
     this.animeInfoListPath = path.join(app.getPath('userData'), 'animeInfo.json');
 
     try {
-      this.animeInfoListData = JSON.parse(fs.readFileSync(this.animeInfoListPath));
+      this.animeInfoListData = JSON.parse(fs.readFileSync(this.animeInfoListPath, 'utf-8'));
     } catch (err) {
       this.animeInfoListData = [];
     }
@@ -360,9 +368,7 @@ class AnimeInfoList {
 
   sort(mode: 'name' | 'date') {
     if (mode === 'name') {
-      this.animeInfoListData.sort(function (a, b) {
-        return a.title > b.title ? 1 : -1;
-      });
+      this.animeInfoListData.sort((entryA, entryB) => (entryA.title > entryB.title ? 1 : -1));
     } else {
       //TODO: sort by date
     }
@@ -376,29 +382,29 @@ class AnimeInfoList {
 let animeInfoList = new AnimeInfoList();
 
 /**
- * ipc getAnimeList
+ * ipc: get anime list
  */
-ipcMain.handle('getAnimeList', (_event: Electron.IpcMainEvent): string[] => {
+ipcMain.handle('getAnimeList', (_event: Electron.IpcMainInvokeEvent): string[] => {
   return animeInfoList.getAllAnimeTitle();
 });
 
 /**
- * ipc updateAnimeInfoList
+ * ipc: update anime info list
  */
 ipcMain.on('updateAnimeInfoList', (_event: Electron.IpcMainEvent, sourceIdx: number, destinationIdx: number) => {
   animeInfoList.updateAnimeInfoList(sourceIdx, destinationIdx);
 });
 
 /**
- * ipc sortAnimeInfoList
+ * ipc: sort anime info list
  */
-ipcMain.handle('sortAnimeInfoList', (_event: Electron.IpcMainEvent, mode: 'name' | 'date'): string[] => {
+ipcMain.handle('sortAnimeInfoList', (_event: Electron.IpcMainInvokeEvent, mode: 'name' | 'date'): string[] => {
   animeInfoList.sort(mode);
   return animeInfoList.getAllAnimeTitle();
 });
 
 /**
- * ipc deleteAnimeEntry
+ * ipc: delete anime entry
  */
 ipcMain.on('deleteAnimeEntry', async (event: Electron.IpcMainEvent, title: string, deleteData: boolean = false) => {
   if (!animeInfoList.existAnime(title)) return;
@@ -415,7 +421,7 @@ ipcMain.on('deleteAnimeEntry', async (event: Electron.IpcMainEvent, title: strin
 });
 
 /**
- * ipc animeEntryClick
+ * ipc: anime entry click
  */
 ipcMain.on('animeEntryClick', async (event: Electron.IpcMainEvent, title: string) => {
   currentAnimeEntryInspector = new AnimeEntryInspector(title);
@@ -438,7 +444,7 @@ ipcMain.on('animeEntryClick', async (event: Electron.IpcMainEvent, title: string
 });
 
 /**
- * ipc animeEntryForceInspect
+ * ipc: anime entry force inspect
  */
 ipcMain.on('animeEntryForceInspect', async (event: Electron.IpcMainEvent, title: string) => {
   const inspectResult: 'OK' | 'fail' | 'question' = await currentAnimeEntryInspector.inspect(false, true);
@@ -454,7 +460,7 @@ ipcMain.on('animeEntryForceInspect', async (event: Electron.IpcMainEvent, title:
 });
 
 /**
- * ipc selectAnimeContainingFolder
+ * ipc: select anime containing folder
  */
 ipcMain.on('selectAnimeContainingFolder', async (event: Electron.IpcMainEvent) => {
   if (!mainWindow) return;
@@ -490,7 +496,7 @@ ipcMain.on('selectAnimeContainingFolder', async (event: Electron.IpcMainEvent) =
 });
 
 /**
- * ipc selectAnimeFolder
+ * ipc: select anime folder
  */
 ipcMain.on('selectAnimeFolder', async (event: Electron.IpcMainEvent) => {
   if (!mainWindow) return;
@@ -544,7 +550,7 @@ class AnimeEntryInspector {
   parseFromJson(): boolean {
     const animeEntry = path.join(animeEntryPath, this.animeEntryInfo.title + '.json');
     try {
-      this.animeEntryInfo = JSON.parse(fs.readFileSync(animeEntry));
+      this.animeEntryInfo = JSON.parse(fs.readFileSync(animeEntry, 'utf-8'));
       return true;
     } catch (err) {
       return false;
@@ -556,13 +562,14 @@ class AnimeEntryInspector {
   }
 
   async inspect(reInspect: boolean = false, forceInspect: boolean = false): Promise<'OK' | 'fail' | 'question'> {
+    const fontColor = getProgressBarFontColor();
     this.progressBar = new ProgressBar({
       text: 'Inspecting Folder...',
       detail: 'Resolving files in folder',
       browserWindow: { parent: mainWindow },
       style: {
-        text: { fontSize: '26px', color: 'white' },
-        detail: { fontSize: '20px', lineHeight: '20px', color: 'white', overflow: 'hidden' },
+        text: { fontSize: '26px', color: fontColor },
+        detail: { fontSize: '20px', lineHeight: '20px', color: fontColor, overflow: 'hidden' },
         bar: { background: 'lightgrey' },
         value: { background: settings.getThemeColor() },
       },
@@ -759,8 +766,10 @@ class AnimeEntryInspector {
   }
 
   // parse cue file and remove related files, fetch cue metadata
-  async fetchCueMetadata(file: any, relatedFile: string, album: string) {
-    let metadata = await musicMetadata.parseFile(relatedFile);
+  async fetchCueMetadata(file: IFile, relatedFile: string, album: string) {
+    if (!file.tracks) return;
+
+    const metadata = await musicMetadata.parseFile(relatedFile);
 
     interface cueTracksEntryType {
       title: string;
@@ -776,15 +785,15 @@ class AnimeEntryInspector {
     let cueTracks: cueTracksType = [];
 
     // resolve track plain info
-    file.tracks.forEach((track: any) => {
-      let cueTracksEntry: cueTracksEntryType = {
-        title: track.title,
-        artist: track.performer,
-        track: track.number,
-        index01: -1,
+    file.tracks.forEach((track: ITrack, index: number) => {
+      const cueTracksEntry: cueTracksEntryType = {
+        title: track.title ? track.title : 'track' + index,
+        artist: track.performer ? track.performer : '',
+        track: track.number ? track.number : 1,
+        index01: 0,
       };
 
-      track.indexes.forEach((index: any) => {
+      track.indexes?.forEach((index: any) => {
         const entryKey: keyof cueTracksEntryType = index.number === 0 ? 'index00' : 'index01';
         cueTracksEntry[entryKey] = index.time.min * 60 + index.time.sec * 1 + index.time.frame / 75;
       });
@@ -793,16 +802,16 @@ class AnimeEntryInspector {
     });
 
     // convert track plain info to duration
-    cueTracks.sort(function (trackA, trackB) {
-      return trackA.track - trackB.track;
-    });
+    cueTracks.sort((trackA, trackB) => trackA.track - trackB.track);
 
     cueTracks.forEach((trackEntry: cueTracksEntryType, index: number) => {
+      if (!metadata.format.duration) return;
+
       if (index === cueTracks.length - 1) {
         trackEntry['duration'] = metadata.format.duration - trackEntry.index01;
       } else {
         // if track00 exists, use index00, otherwise use index01
-        let nextIndex00 = cueTracks[index + 1]['index00'];
+        const nextIndex00 = cueTracks[index + 1]['index00'];
         trackEntry['duration'] = (nextIndex00 ? nextIndex00 : cueTracks[index + 1]['index01']) - trackEntry['index01'];
       }
 
@@ -818,21 +827,24 @@ class AnimeEntryInspector {
   // parse single file's metadata, parseMetadataFunction
   async fetchMusicMetaData(filePath: string) {
     try {
-      let metadata = await musicMetadata.parseFile(filePath);
+      const metadata = await musicMetadata.parseFile(filePath);
+      // exclude singles without duration
+      if (!metadata.format.duration) return;
       // add album
-      let singleTitle = metadata.common.title ? metadata.common.title : path.basename(filePath);
-      let album = metadata.common.album ? metadata.common.album : 'Untagged';
-      if (!this.animeEntryInfo.music[album]) {
-        this.animeEntryInfo.music[album] = [];
-      }
+      const singleTitle = metadata.common.title ? metadata.common.title : path.basename(filePath);
+      const album = metadata.common.album ? metadata.common.album : 'Untagged';
+      const artist = metadata.common.artist ? metadata.common.artist : '';
+      const trackNo = metadata.common.track.no ? metadata.common.track.no : 1;
+
+      if (!this.animeEntryInfo.music[album]) this.animeEntryInfo.music[album] = [];
       this.animeEntryInfo.music[album].push({
         title: singleTitle,
-        artist: metadata.common.artist,
-        track: metadata.common.track.no,
-        duration: metadata.format.duration.toFixed(2),
+        artist: artist,
+        track: trackNo,
+        duration: Math.round(metadata.format.duration * 100) / 100,
       });
     } catch (err) {
-      console.error(err);
+      log.error(err);
     }
   }
 
@@ -853,24 +865,26 @@ class AnimeEntryInspector {
     let fetchCueAwait: Array<Promise<void>> = [];
 
     cueFiles.forEach((cueFile) => {
-      let cueMetadata = cueParser.parse(cueFile);
-      let dirname = path.dirname(cueFile);
+      const cueMetadata = cueParser.parse(cueFile);
+
+      if (!cueMetadata.title || !cueMetadata.files) return;
+
+      const cueTitle: string = cueMetadata.title;
 
       // add album
-      if (!this.animeEntryInfo.music[cueMetadata.title]) {
-        this.animeEntryInfo.music[cueMetadata.title] = [];
-      }
+      if (!this.animeEntryInfo.music[cueTitle]) this.animeEntryInfo.music[cueTitle] = [];
 
-      cueMetadata.files.forEach((file: any) => {
+      cueMetadata.files.forEach((file: IFile) => {
+        if (!file.name) return; // return if no related file name
         // remove related files and get duration
-        let relatedFile = path.join(dirname, file.name);
-        let relatedFileIdx = singleFiles.indexOf(relatedFile);
+        const relatedFile = path.join(path.dirname(cueFile), file.name);
+        const relatedFileIdx = singleFiles.indexOf(relatedFile);
         if (relatedFileIdx === -1) {
-          console.log('cannot find ', relatedFile);
+          log.error('cannot find ', relatedFile);
           return; // cannot find file, just skip
         }
         singleFiles.splice(relatedFileIdx, 1);
-        fetchCueAwait.push(this.fetchCueMetadata(file, relatedFile, cueMetadata.title));
+        fetchCueAwait.push(this.fetchCueMetadata(file, relatedFile, cueTitle));
       });
     });
 
@@ -971,31 +985,46 @@ class AnimeEntryInspector {
 
 let currentAnimeEntryInspector: AnimeEntryInspector;
 
+/**
+ * ipc: shell open path
+ */
 ipcMain.on('shellOpenPath', async (event: Electron.IpcMainEvent, path: string) => {
   if (await shell.openPath(path)) {
     event.reply('showErrorMessage', 'Open failed! Check the folder and try re-inspect!');
   }
 });
 
+/**
+ * ipc: shell show item
+ */
 ipcMain.on('shellShowItem', (_event: Electron.IpcMainEvent, path: string) => {
   shell.showItemInFolder(path);
 });
 
+/**
+ * ipc: shell open url
+ */
 ipcMain.on('shellOpenUrl', (_event: Electron.IpcMainEvent, url: string) => {
   shell.openExternal(url);
 });
 
+/**
+ * ipc: open current anime info file
+ */
 ipcMain.on('openCurrentAnimeInfoFile', (_event: Electron.IpcMainEvent) => {
   shell.openPath(path.join(animeEntryPath, currentAnimeEntryInspector.getAnimeEntryInfo().title + '.json'));
 });
 
+/**
+ * ipc: anime tab close button clicked
+ */
 ipcMain.on('animeTabClose', (event: Electron.IpcMainEvent) => {
   event.reply('removeAnimeTab');
   event.reply('clearEntrySelect');
 });
 
 /**
- * update anime title
+ * ipc: update anime title
  */
 ipcMain.on('updateAnimeTitle', (event: Electron.IpcMainEvent, oldTitle: string, newTitle: string) => {
   if (animeInfoList.existAnime(newTitle)) {
@@ -1011,7 +1040,7 @@ ipcMain.on('updateAnimeTitle', (event: Electron.IpcMainEvent, oldTitle: string, 
 });
 
 /**
- * ipc reinspect
+ * ipc: anime re-inspect
  */
 ipcMain.on('animeReInspect', async (event: Electron.IpcMainEvent, title: string) => {
   if (currentAnimeEntryInspector.getAnimeEntryInfo().title !== title) {
@@ -1030,16 +1059,17 @@ ipcMain.on('animeReInspect', async (event: Electron.IpcMainEvent, title: string)
 });
 
 /**
- * fetch metadata from bangumi by bangumiID
+ * ipc: fetch metadata from bangumi by bangumiID
  */
 ipcMain.on('fetchMetadataByID', async (event: Electron.IpcMainEvent, bangumiID: string) => {
+  const fontColor = getProgressBarFontColor();
   let progressBar = new ProgressBar({
     text: 'Fetching metadata from Bangumi...',
     detail: 'ID: ' + bangumiID,
     browserWindow: { parent: mainWindow },
     style: {
-      text: { fontSize: '26px', color: 'white' },
-      detail: { fontSize: '20px', lineHeight: '20px', color: 'white', overflow: 'hidden' },
+      text: { fontSize: '26px', color: fontColor },
+      detail: { fontSize: '20px', lineHeight: '20px', color: fontColor, overflow: 'hidden' },
       bar: { background: 'lightgrey' },
       value: { background: settings.getThemeColor() },
     },
@@ -1090,16 +1120,17 @@ ipcMain.on('fetchMetadataByID', async (event: Electron.IpcMainEvent, bangumiID: 
 });
 
 /**
- * fetch metadata from bangumi by Name
+ * ipc: fetch metadata from bangumi by Name
  */
 ipcMain.on('fetchMetadataByName', async (event: Electron.IpcMainEvent, name: string) => {
+  const fontColor = getProgressBarFontColor();
   let progressBar = new ProgressBar({
     text: 'Fetching anime information from Bangumi...',
     detail: 'Anime: ' + name,
     browserWindow: { parent: mainWindow },
     style: {
-      text: { fontSize: '26px', color: 'white' },
-      detail: { fontSize: '20px', lineHeight: '20px', color: 'white', overflow: 'hidden' },
+      text: { fontSize: '26px', color: fontColor },
+      detail: { fontSize: '20px', lineHeight: '20px', color: fontColor, overflow: 'hidden' },
       bar: { background: 'lightgrey' },
       value: { background: settings.getThemeColor() },
     },
@@ -1122,7 +1153,7 @@ ipcMain.on('fetchMetadataByName', async (event: Electron.IpcMainEvent, name: str
 });
 
 /**
- * update anime video section title
+ * ipc: update anime video section title
  */
 ipcMain.on('updateAnimeVideoSectionTitle', (event: Electron.IpcMainEvent, dirname: string, newTitle: string) => {
   currentAnimeEntryInspector.updateAnimeInfoVideoSectionTitle(dirname, newTitle);
@@ -1130,7 +1161,7 @@ ipcMain.on('updateAnimeVideoSectionTitle', (event: Electron.IpcMainEvent, dirnam
 });
 
 /**
- * fetch bangumi metadata to update episode info in video section
+ * ipc: fetch bangumi metadata to update episode info in video section
  */
 ipcMain.on('fetchEpisodeData', async (event: Electron.IpcMainEvent, bangumiID: string, folder: string) => {
   try {
@@ -1155,13 +1186,17 @@ ipcMain.on('fetchEpisodeData', async (event: Electron.IpcMainEvent, bangumiID: s
   }
 });
 
-// update anime video section order
+/**
+ * ipc: update anime video section order
+ */
 ipcMain.on('updateAnimeVideoSectionOrder', (event: Electron.IpcMainEvent, dirname: string, newOrder: Array<number>) => {
   currentAnimeEntryInspector.updateAnimeInfoVideoSectionOrder(dirname, newOrder);
   event.reply('createAnimeDetailTab', currentAnimeEntryInspector.getAnimeEntryInfo());
 });
 
-// update anime video episode info
+/**
+ * ipc: update anime video episode info
+ */
 ipcMain.on(
   'updateAnimeVideoEpisodeInfo',
   (event: Electron.IpcMainEvent, videoPath: string, type: 'title' | 'secondTitle' | 'desc', newValue: string) => {
@@ -1170,9 +1205,12 @@ ipcMain.on(
   }
 );
 
+/**
+ * ipc: get video snapshot path
+ */
 ipcMain.handle(
   'getVideoSnapshotPath',
-  async (_event: Electron.IpcMainEvent, file: string): Promise<string> => {
+  async (_event: Electron.IpcMainInvokeEvent, file: string): Promise<string> => {
     const cacheMD5 = md5.hex(file);
     const outputPath = path.join(snapshotCachePath, cacheMD5 + '.jpg');
     return outputPath;
