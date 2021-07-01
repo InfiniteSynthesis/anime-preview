@@ -1,0 +1,382 @@
+.animePanel {
+  height: 100vh;
+  flex-grow: 1;
+  background: transparent;
+}
+
+.animeTab {
+  height: 100%;
+  padding: 10px;
+  padding-bottom: 50px;
+  box-sizing: border-box;
+}
+
+.titleWrapper {
+  width: 100%;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.titleWrapper > span {
+  margin-right: auto;
+  font-weight: bold;
+  transition: all ease 0.3s;
+}
+
+.titleWrapper > button {
+  flex-shrink: 0;
+}
+
+.titleWrapper > button > svg {
+  width: 56px;
+  height: 40px;
+  opacity: 0.6;
+  transition: all ease 0.3s;
+}
+
+.titleWrapper > button:hover > svg {
+  opacity: 1;
+}
+
+/* metadataSection CSS */
+.metadataSection {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.metadataSection > div:first-child {
+  width: 30%;
+  padding: 10px;
+  margin-right: 10px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.metadataSection > div:first-child > img {
+  width: 100%;
+  padding: 2px;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+.metadataSubsection {
+  padding: 5px;
+  flex-shrink: 1;
+}
+
+.metadataSubsection > .panelSection > p {
+  line-height: 2em;
+}
+
+.metadataInfoGrid {
+  margin: 10px 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.metadataInfoGrid > div {
+  padding: 5px;
+  border: solid thin grey;
+}
+
+.metadataCharacter > img {
+  width: 45px;
+  height: 45px;
+  margin-right: 10px;
+  border: solid thin lightgrey;
+  border-radius: 3px;
+  float: left;
+}
+
+.metadataCharacter > p {
+  text-decoration: none;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to right, var(--theme-color), var(--theme-color) 50%, black 50%);
+  background-size: 200% 100%;
+  background-position: 100%;
+}
+
+.metadataCharacter > p:hover {
+  transition: all 0.3s cubic-bezier(0, 0, 0.23, 1);
+  background-position: 0%;
+}
+
+.metadataCharacter > p:first-child {
+  border-bottom: solid thin grey;
+}
+
+.metadataLinks > div {
+  margin-right: 10px;
+}
+
+.metadataLinks > div > img {
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  opacity: 0.6;
+  transition: all ease 0.3s;
+}
+
+.metadataLinks > div:hover > img {
+  opacity: 1;
+}
+
+/* videoSection CSS */
+.videoSectionTitle {
+  padding: 16px 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.videoSectionTitle > svg {
+  width: 1.5em;
+  height: 1.5em;
+  margin: 0 0.75em;
+  fill: rgba(0, 0, 0, 0.8);
+  flex-shrink: 0;
+}
+
+.videoSectionTitle > span {
+  font-size: 1.5em;
+  margin-right: auto;
+  font-weight: bold;
+}
+
+.videoSectionTitle > button > svg {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.videoContentWrapper {
+  padding: 0 10px;
+}
+
+.videoContentWrapperGrid {
+  padding: 0 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px 10px;
+}
+
+.videoCardListLayout {
+  min-width: 400px;
+  margin: 15px 0;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-direction: row;
+}
+
+.videoCardGridLayout {
+  margin: 15px 0;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.videoCardInnerListLayout {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  overflow: hidden;
+}
+
+.videoCardInnerGridLayout {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  position: relative;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  overflow: hidden;
+}
+
+.videoCardInnerListLayout > img {
+  width: 300px;
+  align-self: flex-start;
+}
+
+.videoCardInnerGridLayout > img {
+  width: 100%;
+}
+
+.videoCardPanel {
+  padding: 10px;
+  flex-grow: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.videoCardPanelTitleWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.videoCardPanelSecondTitle {
+  font-size: 1.3em;
+  color: grey;
+}
+
+.videoCardPanelTitle {
+  margin-right: 20px;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.videoCardPanel > p {
+  margin: 10px 0;
+  font-size: 1.1em;
+}
+
+.videoCardPanelAudioSubtitle {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.videoCardPanelAudioSubtitle > div {
+  padding: 3px;
+  margin: 0 5px 3px 5px;
+  line-height: 1em;
+  border-radius: 3px;
+  font-size: 0.8em;
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+}
+
+.videoCardPanelSubtitle > svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
+}
+
+.videoCardPanelAudio > svg {
+  width: 20px;
+  height: 20px;
+  margin: -3px 5px -3px 0;
+}
+
+.videoCardPanelDesc {
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  background-color: rgba(211, 211, 211, 0.95);
+}
+
+@keyframes anime-card-show {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes anime-card-hide {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.videoCardPanelDesc > button {
+  font-size: 18px;
+  font-weight: bold;
+  float: right;
+  background: transparent;
+  border: none;
+  z-index: 10;
+}
+
+.videoCardPanelDesc > h4 {
+  font-size: 20px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.videoCardPlayWrapper {
+  padding: 10px;
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom-right-radius: 5px;
+  transition: all ease 0.3s;
+}
+
+.videoCardPlayWrapper:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.videoCardPlayWrapper > svg {
+  width: 1em;
+  height: 1em;
+}
+
+.videoCardPlayWrapperList {
+  border-left: dashed thin rgba(0, 0, 0, 0.2);
+  border-top-right-radius: 5px;
+}
+
+.videoCardPlayWrapperGrid {
+  border-top: dashed thin rgba(0, 0, 0, 0.2);
+  border-bottom-left-radius: 5px;
+}
+
+/* audioCard CSS */
+
+.audioCard {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.audioCard > caption {
+  margin: 20px 0;
+  font-size: 24px;
+  text-align: left;
+}
+
+.audioCard tr:nth-child(odd) {
+  background-color: rgba(211, 211, 211, 0.4);
+}
+
+.audioCard .audioCardTitle {
+  width: 50%;
+  text-align: left;
+}
+
+.audioCard .audioCardArtist {
+  width: 40%;
+  text-align: right;
+}
+
+.audioCard .audioCardDuration {
+  width: 10%;
+  text-align: right;
+}

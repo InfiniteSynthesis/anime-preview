@@ -1,0 +1,327 @@
+.dialogMask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  opacity: 0;
+  transition: all 0.5s ease-out;
+}
+
+.dialogMask.open {
+  display: flex;
+  opacity: 1;
+}
+
+.dialogWrapper {
+  border: solid 1px rgba(36, 36, 36, 0.98);
+  background-color: transparent;
+  border-radius: 5px;
+}
+
+.dialog {
+  border: solid 1px #5c5c5c;
+  background: rgba(55, 55, 55, 0.98);
+  transition: all 0.5s ease-out;
+  border-radius: 5px;
+  box-shadow: 0 0 30px 5px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  color: white;
+}
+
+/* dialog settings */
+.dialogSettings {
+  width: 800px;
+  height: 600px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.dialogSettingsNav {
+  width: 200px;
+  flex-shrink: 0;
+  border-right: solid thin lightgrey;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialogSettingsNav > li {
+  height: 40px;
+  text-align: center;
+  line-height: 40px;
+  border-bottom: thin solid lightgrey;
+  background-color: transparent;
+  transition: all ease 0.3s;
+}
+
+.dialogSettingsNav > li:hover {
+  background-color: var(--theme-color50);
+}
+
+.dialogSettingsNav > li:active {
+  background-color: var(--theme-color);
+}
+
+.settingsPanel {
+  padding: 10px 10px 30px 10px;
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-y: hidden;
+}
+
+.settingsPanel > section {
+  margin-bottom: 10px;
+}
+
+.settingsPanel > section > p {
+  margin-bottom: 8px;
+}
+
+.settingsPanel .longInput {
+  padding: 2px 8px;
+  width: 90%;
+  box-sizing: border-box;
+}
+
+.settingsPanel .shortInput {
+  padding: 2px 8px;
+  width: 40%;
+  box-sizing: border-box;
+}
+
+.panelInputWrapper {
+  position: relative;
+}
+
+.panelInputWrapper .shortInput + label {
+  width: 40%;
+  padding: 5px;
+  border: solid red 2px;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background-color: rgb(255, 64, 64);
+  box-sizing: border-box;
+}
+
+.panelInputWrapper .longInput + label {
+  width: 90%;
+  padding: 5px;
+  border: solid red 2px;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background-color: rgb(255, 64, 64);
+  box-sizing: border-box;
+}
+
+.panelInputWrapper > .longInput + span {
+  width: 15px;
+  height: 15px;
+  margin-left: 10px;
+  border-radius: 50%;
+}
+
+.settingPanelSelect {
+  width: 40%;
+  color: black;
+  font-size: 18px;
+}
+
+/* dialog sort list */
+.dialogSortList {
+  width: 500px;
+  padding: 10px 30px;
+}
+
+.dialogSortList img {
+  width: 100px;
+  height: 100px;
+  margin: 15px;
+}
+
+.dialogSortList ul {
+  max-height: 500px;
+  margin-bottom: 10px;
+  background-color: lightgrey;
+}
+
+.dialogSortList ul > li {
+  padding: 5px;
+  margin: 5px;
+  background-color: grey;
+}
+
+.dialogSortList .rowWrapper button {
+  width: 40%;
+  height: 30px;
+  padding: 0 15px;
+  margin-left: auto;
+  border-radius: 5px;
+  color: #fff;
+}
+
+/* dialog error */
+.dialogError {
+  width: 250px;
+  padding: 20px 10px;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+}
+
+.dialogError > img {
+  width: 100px;
+  height: 100px;
+}
+
+.dialogError > p {
+  margin: 20px;
+  text-align: center;
+}
+
+.dialogError > button {
+  width: 230px;
+  height: 35px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  color: white;
+}
+
+/* dialog question */
+
+.checkboxWrapper {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.checkboxWrapper > label {
+  width: 1em;
+  height: 1em;
+  margin: 0 10px 0 0;
+  border-radius: 2px;
+  text-align: center;
+  font-size: 16px;
+  color: white;
+  background-color: lightgrey;
+  overflow: hidden;
+}
+
+.checkboxWrapper > label.checkboxChecked::before {
+  display: block;
+  content: '\2714';
+  background-color: var(--theme-color);
+}
+
+/* dialog select list */
+
+.dialogSelectList {
+  width: 500px;
+  padding: 20px;
+}
+
+.dialogSelectList ul {
+  max-height: 500px;
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: lightgrey;
+}
+
+.dialogSelectList ul > li {
+  height: 50px;
+  margin-bottom: 5px;
+  background-color: grey;
+  transition: all ease 0.3s;
+}
+
+.dialogSelectList ul > li:hover {
+  background-color: var(--theme-color50);
+}
+
+.dialogSelectList ul > li > section > p:first-child {
+  font-size: 20px;
+}
+
+.dialogSelectList ul > li > section > p:last-child {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dialogSelectList ul > li > img {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+  float: left;
+}
+
+/* dialog prompt */
+.dialogPrompt {
+  width: 600px;
+}
+
+.dialogPrompt > img {
+  width: 100px;
+  height: 100px;
+  margin: 20px;
+  float: left;
+}
+
+.dialogPrompt > p {
+  width: 580px;
+  margin-top: 20px;
+  font-size: 18px;
+}
+
+.dialogPrompt > input {
+  width: 440px;
+  margin: 10px 0;
+}
+
+.dialogPrompt > textarea {
+  width: 440px;
+  height: 100px;
+  margin: 10px 0;
+  font-size: 18px;
+}
+
+.dialogControl {
+  padding: 5px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.dialogControl button {
+  width: 150px;
+  height: 30px;
+  padding: 0 15px;
+  margin: 0 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  color: #fff;
+}
+
+.buttonOK {
+  background-color: var(--theme-color);
+  transition: all ease 0.3s;
+}
+
+.buttonOK:hover {
+  background: var(--theme-color75);
+}
+
+.buttonCancel {
+  background: #ccc;
+  transition: all ease 0.3s;
+}
+
+.buttonCancel:hover {
+  background: #bbb;
+}

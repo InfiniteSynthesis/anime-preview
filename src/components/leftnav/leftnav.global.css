@@ -1,0 +1,120 @@
+.leftNav {
+  width: 30vw;
+  height: 100vh;
+  padding: 10px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: stretch;
+  background: rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.leftNavTitleWrapper > h2 {
+  margin: 0;
+}
+
+.leftNavTitleWrapper .leftNavAnimeAmount {
+  height: 20px;
+  padding: 0 6px;
+  margin: 0 auto 0 10px;
+  display: flex;
+  align-self: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 12px;
+  line-height: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  color: white;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.animeList {
+  background-color: rgba(255, 255, 255, 0.25);
+  flex-grow: 1;
+}
+
+.animeEntry {
+  min-height: 24px;
+  padding: 0 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  transition: all 0.5s ease;
+}
+
+.animeEntryDragging {
+  background-color: var(--theme-color);
+  border-radius: 5px;
+}
+
+.animeEntrySelected {
+  position: absolute;
+  width: 5px;
+  height: 1.5em;
+  background-color: var(--theme-color);
+}
+
+.animeEntry > span {
+  margin: 0.8em 10px;
+}
+
+.animeEntry > .animeEntrySpan {
+  text-decoration: none;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 100%;
+  background-position: 100%;
+}
+
+.animeEntry:hover > .animeEntrySpan {
+  transition: all 0.3s cubic-bezier(0, 0, 0.23, 1);
+  background-position: 0%;
+}
+
+.animeEntryDragWrapper {
+  width: 2.25em;
+  height: 2.25em;
+  padding-left: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.animeEntry:hover .animeEntryDragWrapper {
+  opacity: 1;
+}
+
+.animeEntryDragWrapper > svg {
+  height: 2.25em;
+  height: 2.25em;
+}
+
+.leftNavToolbar {
+  margin: 10px;
+}
+
+.leftNavToolbar > li {
+  width: 25px;
+  height: 25px;
+  padding: 3px;
+  margin-right: 10px;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.leftNavToolbar > li > svg {
+  width: 25px;
+  height: 25px;
+  opacity: 0.6;
+  transition: all ease 0.3s;
+}
+
+.leftNavToolbar > li:hover > svg {
+  opacity: 1;
+}
