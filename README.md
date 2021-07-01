@@ -3,6 +3,11 @@
 ![forthebadge](https://forthebadge.com/images/badges/made-with-typescript.svg)
 ![forthebadge](https://forthebadge.com/images/badges/powered-by-coffee.svg)
 
+
+## Introduction
+
+Anime Preview is a tool for managing local anime Blue-Ray resources.
+
 ## Install
 
 First, clone the repo via git and install dependencies:
@@ -25,8 +30,15 @@ yarn start
 
 To package apps for the local platform:
 
+- Mac:
+
 ```bash
 yarn package
+```
 
+- Win:
+
+```
+yarn build
 node_modules/.bin/electron-builder -w nsis
 ```
