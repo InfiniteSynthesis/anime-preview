@@ -26,6 +26,14 @@ Start the app in the `dev` environment:
 yarn start
 ```
 
+## Debugging
+
+When debugging with VS Code:
+
+1. Change the `--remote-debugging-port` and renderer port in `.vscode/launch.json` to the port in local `chrome://inspect`.
+
+2. Comment out `before` function in `configs/webpack.config.renderer.dev.babel.js` (This function creates the main process when using terminal, but will incur duplicate processes when using VS Code debug panel).
+
 ## Packaging for Production
 
 To package apps for the local platform:

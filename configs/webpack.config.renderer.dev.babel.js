@@ -259,6 +259,7 @@ export default merge(baseConfig, {
       verbose: true,
       disableDotRule: false,
     },
+    // comment out before function when debugging with vscode
     before() {
       console.log('Starting Main Process...');
       spawn('npm', ['run', 'start:main'], {
